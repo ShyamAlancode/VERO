@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+dist/
+.npm/
+
+# Chrome Extension build artifacts
+*.crx
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
