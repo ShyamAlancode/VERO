@@ -22,9 +22,18 @@
     async function drainQueue() {
         processing = true;
         while (queue.length > 0) {
+            if (contextDead) { queue.length = 0; break; }
             const item = queue.shift();
-            if (item.type === 'caption') await scanCaption(item.el);
-            await sleep(3000); // 3s gap between Gemini calls
+            let status = 'ok';
+            if (item.type === 'caption') status = await scanCaption(item.el);
+            if (status === 'rate-limited') {
+                item.el.removeAttribute('data-vero-caption');
+                queue.unshift(item);
+                console.log('[VERO] ⏸️ Queue paused for 65s (rate limited)');
+                await sleep(65000);
+            } else {
+                await sleep(8000); // 8s between requests
+            }
         }
         processing = false;
     }
@@ -129,7 +138,16 @@ Respond ONLY with JSON (no markdown):
 
             console.log('[VERO] 🤖 Calling Gemini for caption...');
             const res = await bgMessage('GEMINI_REQUEST', { prompt });
-            if (!res.success) { console.error('[VERO] Caption Gemini failed:', res.error); article.setAttribute('data-vero-caption', 'error'); return; }
+            if (!res.success) {
+                const err = res.error || '';
+                if (err.includes('Rate limited') || err.includes('API paused') || err.includes('Pausing')) {
+                    console.warn('[VERO] ⏸️ Caption rate limited — will retry later');
+                    return 'rate-limited';
+                }
+                console.error('[VERO] Caption Gemini failed:', err);
+                article.setAttribute('data-vero-caption', 'error');
+                return 'error';
+            }
 
             const result = parseGeminiJSON(res.data);
             console.log('[VERO] 📊 Caption result:', result);

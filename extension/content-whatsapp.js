@@ -22,9 +22,18 @@
     async function drainQueue() {
         processing = true;
         while (queue.length > 0) {
+            if (contextDead) { queue.length = 0; break; }
             const el = queue.shift();
-            await processMsg(el);
-            await sleep(3000); // 3s between requests to stay under free-tier limits
+            const status = await processMsg(el);
+            if (status === 'rate-limited') {
+                // Put the message back and pause the ENTIRE queue
+                el.removeAttribute('data-vero');
+                queue.unshift(el);
+                console.log('[VERO] ⏸️ Queue paused for 65s (rate limited)');
+                await sleep(65000);
+            } else {
+                await sleep(8000); // 8s between requests to stay under free-tier limits
+            }
         }
         processing = false;
     }
@@ -112,7 +121,7 @@
         const messages = findMessageElements();
         // Only process the LAST 5 unprocessed messages (most recent)
         const unprocessed = messages.filter(m => !m.hasAttribute('data-vero'));
-        const toProcess = unprocessed.slice(-5);
+        const toProcess = unprocessed.slice(-2); // Only 2 at a time to stay under limits
         console.log(`[VERO] Scanning: ${messages.length} total, ${unprocessed.length} unprocessed, queuing ${toProcess.length}`);
         toProcess.forEach(enqueue);
     }
@@ -199,9 +208,15 @@ Be strict: if unsure, return label "UNKNOWN".`;
             removeIndicator(el);
 
             if (!geminiRes.success) {
-                console.error('[VERO] ❌ Gemini failed:', geminiRes.error);
+                const err = geminiRes.error || '';
+                if (err.includes('Rate limited') || err.includes('API paused') || err.includes('Pausing')) {
+                    console.warn('[VERO] ⏸️ Rate limited — will retry later');
+                    el.setAttribute('data-vero', 'queued');
+                    return 'rate-limited';
+                }
+                console.error('[VERO] ❌ Gemini failed:', err);
                 el.setAttribute('data-vero', 'error');
-                return;
+                return 'error';
             }
 
             console.log('[VERO] 🤖 Gemini raw response:', geminiRes.data?.substring(0, 200));
