@@ -242,16 +242,15 @@ Respond ONLY with JSON (no markdown):
         if (contextDead) return Promise.resolve({ success: false, error: 'Context dead' });
         return new Promise((resolve) => {
             try {
-                if (!chrome.runtime?.id) { killScript(); resolve({ success: false, error: 'Context dead' }); return; }
                 chrome.runtime.sendMessage({ type, ...payload }, (res) => {
                     if (chrome.runtime.lastError) {
                         const err = chrome.runtime.lastError.message || '';
-                        if (err.includes('invalidated') || err.includes('Extension context')) { killScript(); }
+                        if (err.includes('invalidated')) { killScript(); }
                         resolve({ success: false, error: err });
                     } else { resolve(res || { success: false }); }
                 });
             } catch (err) {
-                if (err.message?.includes('invalidated') || err.message?.includes('Extension context')) { killScript(); }
+                if (err.message?.includes('invalidated')) { killScript(); }
                 resolve({ success: false, error: err.message });
             }
         });
