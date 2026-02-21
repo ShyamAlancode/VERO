@@ -4,228 +4,176 @@ let settings = {
     enabled: true,
     geminiKey: '',
     apiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-    privacyMode: true
+    privacyMode: true,
+    whatsapp: true
 };
 
 // Load settings
-chrome.storage.local.get(['enabled', 'geminiKey', 'apiEndpoint', 'privacyMode'], (result) => {
+chrome.storage.local.get(['enabled', 'geminiKey', 'apiEndpoint', 'privacyMode', 'whatsapp'], (result) => {
     settings = { ...settings, ...result };
+    if (settings.enabled && settings.whatsapp) {
+        waitForWhatsApp();
+    }
 });
 
 // Listen for settings updates
 chrome.storage.onChanged.addListener((changes) => {
     if (changes.enabled) settings.enabled = changes.enabled.newValue;
     if (changes.geminiKey) settings.geminiKey = changes.geminiKey.newValue;
-    if (changes.apiEndpoint) settings.apiEndpoint = changes.apiEndpoint.newValue;
-    if (changes.privacyMode) settings.privacyMode = changes.privacyMode.newValue;
+    if (changes.whatsapp) settings.whatsapp = changes.whatsapp.newValue;
 });
 
-// Wait for WhatsApp to load
 function waitForWhatsApp() {
-    const interval = setInterval(() => {
-        const messageContainer = document.querySelector('[data-testid="conversation-panel-messages"]') ||
-            document.querySelector('div[role="grid"]') ||
-            document.querySelector('div[role="list"]');
-
-        if (messageContainer) {
-            clearInterval(interval);
+    const checkInterval = setInterval(() => {
+        const mainPane = document.querySelector('#pane-side') || document.querySelector('[role="grid"]');
+        if (mainPane) {
+            clearInterval(checkInterval);
             initMessageObserver();
-
-            // Scan existing messages
-            setTimeout(() => {
-                document.querySelectorAll('[data-pre-plain-text], .message-in, .message-out').forEach(scanMessage);
-            }, 2000);
+            // Initial scan
+            scanAllMessages();
         }
-    }, 1000);
+    }, 1500);
 }
 
-// Initialize mutation observer for new messages
-function initMessageObserver() {
-    const targetNode = document.querySelector('[data-testid="conversation-panel-messages"]') ||
-        document.querySelector('div[role="grid"]') ||
-        document.querySelector('div[role="list"]') ||
-        document.body;
+function scanAllMessages() {
+    const messages = document.querySelectorAll('.message-in, .message-out, [data-testid="msg-container"]');
+    messages.forEach(scanMessage);
+}
 
+function initMessageObserver() {
     const observer = new MutationObserver((mutations) => {
-        if (!settings.enabled) return;
+        if (!settings.enabled || !settings.whatsapp) return;
 
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
                 if (node.nodeType === 1) {
-                    const messageElements = [];
-
-                    if (node.matches && (node.matches('[data-pre-plain-text]') || node.matches('.message-in') || node.matches('.message-out'))) {
-                        messageElements.push(node);
+                    const messageElements = node.querySelectorAll('.message-in, .message-out, [data-testid="msg-container"]');
+                    messageElements.forEach(scanMessage);
+                    if (node.matches('.message-in, .message-out, [data-testid="msg-container"]')) {
+                        scanMessage(node);
                     }
-
-                    const nestedMessages = node.querySelectorAll?.('[data-pre-plain-text], .message-in, .message-out') || [];
-                    messageElements.push(...nestedMessages);
-
-                    messageElements.forEach(msgEl => {
-                        setTimeout(() => scanMessage(msgEl), 100);
-                    });
                 }
             });
         });
     });
 
-    observer.observe(targetNode, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// Scan individual message
 async function scanMessage(messageElement) {
     if (messageElement.hasAttribute('data-vero-scanned')) return;
 
-    let messageText = '';
-    const textSelectors = [
-        '.selectable-text.copyable-text',
-        '[data-testid="text-message"]',
-        'span[dir="ltr"]',
-        'span[dir="rtl"]',
-        '.message-in span',
-        '.message-out span'
-    ];
+    // Extract text
+    const textEl = messageElement.querySelector('.copyable-text span') ||
+        messageElement.querySelector('[data-testid="text-message"]') ||
+        messageElement.querySelector('span[dir="ltr"]');
 
-    for (const selector of textSelectors) {
-        const textEl = messageElement.querySelector(selector);
-        if (textEl && textEl.innerText.trim()) {
-            messageText = textEl.innerText.trim();
-            break;
-        }
-    }
+    const text = textEl?.innerText?.trim();
+    if (!text || text.length < 15) return;
 
-    if (!messageText) {
-        messageText = messageElement.innerText?.trim() || '';
-    }
-
-    if (!messageText || messageText.length < 10) return;
-    if (messageText.startsWith('You:') || messageText.includes('joined using')) return;
+    // Skip system messages
+    if (text.includes('waiting for this message') || text.includes('Messages are end-to-end encrypted')) return;
 
     messageElement.setAttribute('data-vero-scanned', 'true');
     showScanningIndicator(messageElement);
 
     try {
-        const result = await analyzeText(messageText);
+        const result = await analyzeText(text);
         removeScanningIndicator(messageElement);
 
         if (result.isFake || result.isMisleading) {
-            injectMessageWarning(messageElement, result);
-            chrome.runtime.sendMessage({ type: 'DETECTED_FAKE', mediaType: 'text', isFake: true });
+            injectWarning(messageElement, result);
+            chrome.runtime.sendMessage({
+                type: 'DETECTED_FAKE',
+                mediaType: 'text',
+                isFake: true
+            });
         }
-    } catch (error) {
-        console.error('VERO analysis error:', error);
+    } catch (err) {
+        console.error('VERO: Analysis failed', err);
         removeScanningIndicator(messageElement);
     }
 }
 
-function showScanningIndicator(messageElement) {
+function showScanningIndicator(el) {
     const indicator = document.createElement('div');
     indicator.className = 'vero-pulse-shield';
-    indicator.id = 'vero-indicator-' + Date.now();
     indicator.innerHTML = '🛡️';
-    indicator.style.width = '20px';
-    indicator.style.height = '20px';
-    indicator.style.fontSize = '10px';
-
-    const messageContainer = messageElement.closest('[data-pre-plain-text]')?.parentElement || messageElement;
-    if (getComputedStyle(messageContainer).position === 'static') {
-        messageContainer.style.position = 'relative';
-    }
-    messageContainer.appendChild(indicator);
-    messageElement.setAttribute('data-vero-indicator', indicator.id);
+    indicator.style.position = 'absolute';
+    indicator.style.top = '-10px';
+    indicator.style.right = '-10px';
+    indicator.style.width = '24px';
+    indicator.style.height = '24px';
+    el.style.position = 'relative';
+    el.appendChild(indicator);
+    el._vero_indicator = indicator;
 }
 
-function removeScanningIndicator(messageElement) {
-    const indicatorId = messageElement.getAttribute('data-vero-indicator');
-    if (indicatorId) {
-        const indicator = document.getElementById(indicatorId);
-        if (indicator) indicator.remove();
+function removeScanningIndicator(el) {
+    if (el._vero_indicator) {
+        el._vero_indicator.remove();
+        delete el._vero_indicator;
     }
 }
 
 async function analyzeText(text) {
-    const prompt = `
-You are a fact-checking AI for VERO. Analyze this message for misinformation:
-
-"${text}"
-
-Respond with a JSON object only (no other text):
-{
-  "isFake": boolean,
-  "isMisleading": boolean,
-  "confidence": number (0-100),
-  "label": "FAKE" or "MISLEADING" or "VERIFIED" or "UNKNOWN",
-  "explanation": "Brief 1-line explanation",
-  "source": "Source name if available (PIB, AltNews, etc.) or null",
-  "sourceUrl": "URL if available or null"
-}
-
-Base your analysis on official fact-checking sources. If unsure, set isFake: false, isMisleading: false, label: "UNKNOWN".
-  `.trim();
-
+    // If no API key, use mock logic for the hackathon demo
     if (!settings.geminiKey) {
-        // Demo/mock fallback when no API key is set
-        if (text.toLowerCase().includes('5000') || text.toLowerCase().includes('free money') || text.toLowerCase().includes('govt scheme')) {
-            return { isFake: true, isMisleading: true, confidence: 95, label: 'FAKE', explanation: 'PIB fact-checked this in 2023. No such scheme exists.', source: 'PIB Fact Check', sourceUrl: 'https://pib.gov.in/factcheck' };
+        const lowerText = text.toLowerCase();
+        if (lowerText.includes('free cash') || lowerText.includes('win 5000') || lowerText.includes('govt scheme')) {
+            return {
+                isFake: true,
+                isMisleading: true,
+                confidence: 92,
+                label: 'FAKE',
+                explanation: 'Suspicious government scheme identified as misinformation.',
+                source: 'PIB Fact Check',
+                sourceUrl: 'https://pib.gov.in/factcheck'
+            };
         }
-        return { isFake: false, isMisleading: false, confidence: 0, label: 'UNKNOWN', explanation: '', source: null, sourceUrl: null };
+        return { isFake: false };
     }
 
-    const response = await new Promise((resolve, reject) => {
+    const prompt = `Analyze this message. If it is likely fake news, deepfake text, or misinformation, mark it. 
+  Respond ONLY with JSON: 
+  {"isFake": boolean, "isMisleading": boolean, "confidence": number, "label": "FAKE"|"MISLEADING"|"VERIFIED", "explanation": "1-line reason", "source": "string", "sourceUrl": "string"}
+  Text: "${text}"`;
+
+    return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
             type: 'GEMINI_REQUEST',
             url: settings.apiEndpoint,
             apiKey: settings.geminiKey,
             body: {
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.2, maxOutputTokens: 256 }
+                generationConfig: { temperature: 0.1, maxOutputTokens: 200 }
             }
         }, (response) => {
-            if (response?.success) resolve(response.data);
-            else reject(new Error(response?.error || 'Unknown error'));
+            if (response && response.success) {
+                try {
+                    const rawText = response.data.candidates[0].content.parts[0].text;
+                    const jsonMatch = rawText.match(/\{.*\}/s);
+                    resolve(JSON.parse(jsonMatch[0]));
+                } catch (e) {
+                    resolve({ isFake: false });
+                }
+            } else {
+                reject(response?.error || 'Unknown error');
+            }
         });
     });
-
-    try {
-        const rawText = response.candidates[0].content.parts[0].text;
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-        console.error('VERO: Failed to parse Gemini response', e);
-    }
-
-    return { isFake: false, isMisleading: false, confidence: 0, label: 'UNKNOWN', explanation: '', source: null, sourceUrl: null };
 }
 
-function injectMessageWarning(messageElement, result) {
-    if (messageElement.querySelector('.vero-warning-badge')) return;
-
-    const warning = document.createElement('div');
-    const cls = result.label === 'FAKE' ? 'fake' : result.label === 'MISLEADING' ? 'caution' : 'verified';
-    warning.className = `vero-warning-badge ${cls}`;
-
-    const icon = result.label === 'FAKE' ? '❌' : result.label === 'MISLEADING' ? '⚠️' : '✅';
-
-    warning.innerHTML = `
-    <div style="display:flex;align-items:center;gap:4px;">
-      <span>${icon}</span>
-      <span><strong>${result.label}</strong> · ${result.confidence}% confidence</span>
+function injectWarning(el, result) {
+    const badge = document.createElement('div');
+    badge.className = `vero-warning-badge ${result.label.toLowerCase() || 'fake'}`;
+    badge.innerHTML = `
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span>${result.label === 'FAKE' ? '❌' : '⚠️'}</span>
+      <strong>${result.label}</strong> · ${result.confidence}%
     </div>
-    <div style="font-size:11px;margin-top:2px;">${result.explanation || ''}</div>
-    ${result.source ? `<div class="vero-source-link">Source: <a href="${result.sourceUrl || '#'}" target="_blank">${result.source}</a></div>` : ''}
+    <div style="margin-top:3px; font-size:11px;">${result.explanation}</div>
+    ${result.source ? `<div class="vero-source-link">Source: <a href="${result.sourceUrl}" target="_blank">${result.source}</a></div>` : ''}
   `;
-
-    const messageContainer = messageElement.closest('[data-pre-plain-text]')?.parentElement || messageElement;
-    messageContainer.appendChild(warning);
-
-    if (result.label !== 'FAKE') {
-        setTimeout(() => warning.remove(), 10000);
-    }
-}
-
-// Start
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', waitForWhatsApp);
-} else {
-    waitForWhatsApp();
+    el.appendChild(badge);
 }

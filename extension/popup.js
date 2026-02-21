@@ -1,71 +1,63 @@
-// Load settings
+// Popup logic for VERO
+
 document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get([
-        'enabled', 'whatsapp', 'instagram',
-        'geminiKey', 'privacyMode', 'useLocalDeepfake',
-        'stats'
-    ], (result) => {
-        document.getElementById('enabled').checked = result.enabled !== false;
-        document.getElementById('whatsapp').checked = result.whatsapp !== false;
-        document.getElementById('instagram').checked = result.instagram !== false;
-        document.getElementById('geminiKey').value = result.geminiKey || '';
-        document.getElementById('privacyMode').checked = result.privacyMode !== false;
-        document.getElementById('useLocalDeepfake').checked = result.useLocalDeepfake !== false;
+    const whatsappToggle = document.getElementById('whatsapp-toggle');
+    const instagramToggle = document.getElementById('instagram-toggle');
+    const apiKeyInput = document.getElementById('api-key');
+    const saveBtn = document.getElementById('save-btn');
+    const statusText = document.getElementById('status-text');
+    const countChecked = document.getElementById('count-checked');
+    const countFlagged = document.getElementById('count-flagged');
 
-        // Update status badge
-        updateStatusBadge(result.enabled !== false);
+    // Load saved settings
+    chrome.storage.local.get(['enabled', 'whatsapp', 'instagram', 'geminiKey', 'stats'], (data) => {
+        whatsappToggle.checked = data.whatsapp !== false;
+        instagramToggle.checked = data.instagram !== false;
+        apiKeyInput.value = data.geminiKey || '';
 
-        // Update stats
-        const stats = result.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
-        document.getElementById('messagesChecked').textContent = stats.messagesChecked;
-        document.getElementById('fakesDetected').textContent = stats.fakesDetected;
-        document.getElementById('reelsScanned').textContent = stats.reelsScanned;
-        document.getElementById('deepfakesDetected').textContent = stats.deepfakesDetected;
+        const stats = data.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
+        countChecked.textContent = (stats.messagesChecked || 0) + (stats.reelsScanned || 0);
+        countFlagged.textContent = (stats.fakesDetected || 0) + (stats.deepfakesDetected || 0);
+
+        updateStatusUI();
     });
 
-    // Set up AI Studio link
-    document.getElementById('makersuiteLink').href = 'https://aistudio.google.com';
-});
+    saveBtn.addEventListener('click', () => {
+        const settings = {
+            whatsapp: whatsappToggle.checked,
+            instagram: instagramToggle.checked,
+            geminiKey: apiKeyInput.value.trim(),
+            enabled: true
+        };
 
-// Update status badge
-function updateStatusBadge(enabled) {
-    const badge = document.getElementById('statusBadge');
-    if (enabled) {
-        badge.textContent = '● Active';
-        badge.className = 'status-badge status-active';
-    } else {
-        badge.textContent = '○ Inactive';
-        badge.className = 'status-badge status-inactive';
+        chrome.storage.local.set(settings, () => {
+            saveBtn.textContent = '✓ Saved';
+            saveBtn.style.background = '#34a853';
+            updateStatusUI();
+
+            setTimeout(() => {
+                saveBtn.textContent = 'Save Configuration';
+                saveBtn.style.background = '#1a73e8';
+            }, 1500);
+        });
+    });
+
+    function updateStatusUI() {
+        if (whatsappToggle.checked || instagramToggle.checked) {
+            statusText.textContent = 'Active';
+            statusText.style.background = 'rgba(255,255,255,0.2)';
+        } else {
+            statusText.textContent = 'Disabled';
+            statusText.style.background = 'rgba(0,0,0,0.1)';
+        }
     }
-}
 
-// Save settings
-document.getElementById('saveSettings').addEventListener('click', () => {
-    const settings = {
-        enabled: document.getElementById('enabled').checked,
-        whatsapp: document.getElementById('whatsapp').checked,
-        instagram: document.getElementById('instagram').checked,
-        geminiKey: document.getElementById('geminiKey').value.trim(),
-        privacyMode: document.getElementById('privacyMode').checked,
-        useLocalDeepfake: document.getElementById('useLocalDeepfake').checked
-    };
-
-    chrome.storage.local.set(settings, () => {
-        updateStatusBadge(settings.enabled);
-
-        // Show saved confirmation
-        const btn = document.getElementById('saveSettings');
-        const originalText = btn.textContent;
-        btn.textContent = '✓ Saved!';
-        btn.style.background = '#34a853';
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.style.background = '#1a73e8';
-        }, 1500);
-    });
-});
-
-// Listen for enabled toggle to update badge
-document.getElementById('enabled').addEventListener('change', (e) => {
-    updateStatusBadge(e.target.checked);
+    // Poll for stats every 2 seconds
+    setInterval(() => {
+        chrome.storage.local.get(['stats'], (data) => {
+            const stats = data.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
+            countChecked.textContent = (stats.messagesChecked || 0) + (stats.reelsScanned || 0);
+            countFlagged.textContent = (stats.fakesDetected || 0) + (stats.deepfakesDetected || 0);
+        });
+    }, 2000);
 });

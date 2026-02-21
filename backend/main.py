@@ -1,6 +1,6 @@
 """
 VERO Backend API - Optional advanced features
-Deploy on Render free tier
+Deploy on Render or Vercel free tier
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,10 +16,10 @@ load_dotenv()
 
 app = FastAPI(title="VERO API", description="Misinformation detection backend")
 
-# CORS for extension
+# CORS config to allow Chrome extension and web platforms
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # In production, restrict to chrome-extension://<id>
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,69 +45,57 @@ class FactCheckResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "VERO API is running", "status": "active"}
+    return {"message": "VERO API is active", "version": "1.0.0"}
 
 @app.post("/api/verify", response_model=FactCheckResponse)
 async def verify_text(request: TextRequest):
-    """Verify text for misinformation"""
+    """Verify text for misinformation using Gemini 1.5 Flash"""
     
-    # If no API key, return mock response for demo
     if not GEMINI_API_KEY:
-        # Simple mock logic
-        if "5000" in request.text.lower() or "govt" in request.text.lower():
+        # Fallback Mock logic for hackathon demo if key is missing
+        if "5000" in request.text or "govt" in request.text.lower():
             return FactCheckResponse(
                 isFake=True,
                 isMisleading=True,
                 confidence=95,
                 label="FAKE",
-                explanation="PIB fact-checked this in 2023. No such scheme exists.",
+                explanation="PIB fact-checked this content. No such government scheme exists.",
                 source="PIB Fact Check",
                 sourceUrl="https://pib.gov.in/factcheck"
             )
         return FactCheckResponse(
-            isFake=False,
-            isMisleading=False,
-            confidence=0,
-            label="UNKNOWN",
-            explanation="",
-            source=None,
-            sourceUrl=None
+            isFake=False, isMisleading=False, confidence=0, 
+            label="UNKNOWN", explanation="", source=None, sourceUrl=null
         )
     
-    # Use Gemini for fact-checking
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    prompt = f"""
-    You are a fact-checking AI. Analyze this message for misinformation:
-    
-    "{request.text}"
-    
-    Respond with a JSON object only:
-    {{
-        "isFake": boolean,
-        "isMisleading": boolean,
-        "confidence": 0-100,
-        "label": "FAKE" or "MISLEADING" or "VERIFIED" or "UNKNOWN",
-        "explanation": "Brief 1-line explanation",
-        "source": "Source name if available",
-        "sourceUrl": "URL if available"
-    }}
-    """
-    
     try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""
+        Analyze the following text for potential misinformation or fake news.
+        Respond ONLY with a valid JSON object:
+        {{
+            "isFake": boolean,
+            "isMisleading": boolean,
+            "confidence": 0-100,
+            "label": "FAKE" | "MISLEADING" | "VERIFIED" | "UNKNOWN",
+            "explanation": "Brief 1-line explanation",
+            "source": "FactCheck Source Name",
+            "sourceUrl": "URL if available"
+        }}
+        Text: "{request.text}"
+        """
+        
         response = model.generate_content(prompt)
-        # Extract JSON from response
-        text = response.text
-        json_match = text.split('{', 1)[-1].rsplit('}', 1)[0]
-        json_str = '{' + json_match + '}'
-        result = json.loads(json_str)
+        # Attempt to parse JSON from Markdown or raw text
+        raw_text = response.text
+        json_match = raw_text.match(/\{.*\}/s) if hasattr(raw_text, 'match') else raw_text[raw_text.find('{'):raw_text.rfind('}')+1]
+        result = json.loads(json_match)
         
         return FactCheckResponse(**result)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"VERO Backend Error: {e}")
+        raise HTTPException(status_code=500, detail="Internal analysis failure")
 
 @app.get("/api/health")
 async def health():
     return {"status": "healthy"}
-
-# To run: uvicorn main:app --reload

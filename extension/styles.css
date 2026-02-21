@@ -1,124 +1,151 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   VERO – Injected Styles
+   Applied on WhatsApp Web and Instagram.com
+───────────────────────────────────────────────────────────────────────────── */
+
 .vero-warning-badge {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  animation: vero-slide-in 0.2s ease;
-  font-size: 12px;
-  padding: 4px 8px;
-  margin: 4px 0 4px 0;
-  border-radius: 4px;
-  display: inline-block;
-  max-width: fit-content;
-  z-index: 9999;
-  pointer-events: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    animation: vero-slide-in 0.2s ease;
+    font-size: 12px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    border-radius: 6px;
+    display: inline-block;
+    max-width: fit-content;
+    z-index: 9999;
+    pointer-events: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
 }
 
 .vero-warning-badge.fake {
-  background-color: #ffebee;
-  border-left: 3px solid #f44336;
-  color: #b71c1c;
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #b71c1c;
 }
 
 .vero-warning-badge.caution {
-  background-color: #fff8e1;
-  border-left: 3px solid #ffc107;
-  color: #bf360c;
+    background-color: #fff8e1;
+    border-left: 4px solid #ffc107;
+    color: #bf360c;
 }
 
 .vero-warning-badge.verified {
-  background-color: #e8f5e9;
-  border-left: 3px solid #4caf50;
-  color: #1b5e20;
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #1b5e20;
 }
 
 .vero-reel-banner {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  padding: 8px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 10000;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  animation: vero-fade-in 0.3s ease;
-  pointer-events: none;
-  color: white;
+    position: absolute;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10000;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: vero-fade-in 0.3s ease;
+    pointer-events: auto;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .vero-reel-banner.deepfake {
-  background: rgba(244, 67, 54, 0.9);
+    background: rgba(211, 47, 47, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .vero-reel-banner.misleading {
-  background: rgba(255, 152, 0, 0.9);
+    background: rgba(239, 108, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .vero-pulse-shield {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 32px;
-  height: 32px;
-  background: rgba(33, 150, 243, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: vero-pulse 1.5s infinite;
-  z-index: 9999;
-  pointer-events: none;
-  backdrop-filter: blur(2px);
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    background: rgba(33, 150, 243, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: vero-pulse 1.5s infinite;
+    z-index: 9999;
+    pointer-events: none;
+    backdrop-filter: blur(2px);
+    font-size: 16px;
 }
 
 @keyframes vero-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes vero-fade-in {
-  from {
-    opacity: 0;
-  }
+    from {
+        opacity: 0;
+    }
 
-  to {
-    opacity: 1;
-  }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes vero-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
 
-  50% {
-    transform: scale(1.1);
-    opacity: 0.4;
-  }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.4;
+        box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+    }
 
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+    }
 }
 
 .vero-source-link {
-  font-size: 11px;
-  margin-top: 2px;
-  opacity: 0.8;
+    font-size: 10px;
+    margin-top: 4px;
+    opacity: 0.9;
 }
 
 .vero-source-link a {
-  color: inherit;
-  text-decoration: underline;
-  pointer-events: auto;
+    color: inherit;
+    text-decoration: underline;
+    pointer-events: auto;
+}
+
+.vero-badge-close {
+    cursor: pointer;
+    margin-left: auto;
+    opacity: 0.6;
+    font-weight: bold;
+}
+
+.vero-badge-close:hover {
+    opacity: 1;
 }

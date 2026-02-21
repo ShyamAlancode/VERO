@@ -1,32 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
+*$py.class
 .venv/
 venv/
+ENV/
 env/
-*.egg-info/
-
-# Env files
 .env
-.env.local
-.env.*.local
 
-# Node
-node_modules/
-dist/
-.npm/
+# Vercel
+.vercel
 
-# Chrome Extension build artifacts
-*.crx
-*.pem
+# Project specific
+generate_icons.py
+icon_gen.html
 
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# IDE
-.vscode/
-.idea/
-*.swp
