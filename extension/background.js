@@ -1,5 +1,6 @@
-// VERO – Background Service Worker
+// VERO – Background Service Worker v2.0
 // Proxies Gemini, NewsAPI, and PIB requests from content scripts
+// Includes circuit breaker + exponential backoff for API errors
 
 const NEWSAPI_KEY = '241b1aba62fd438aa81630a8e35f666e';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
@@ -10,6 +11,31 @@ const DEFAULT_STATS = {
     reelsScanned: 0,
     deepfakesDetected: 0
 };
+
+// ─── Circuit Breaker ─────────────────────────────────────────
+// Stops ALL Gemini calls when the API returns fatal errors
+let circuitOpen = false;         // true = stop making requests
+let circuitReason = '';          // reason the circuit opened
+let circuitResetTime = 0;        // timestamp when to try again
+let consecutiveFails = 0;        // count of consecutive 429s
+
+function openCircuit(reason, cooldownMs) {
+    circuitOpen = true;
+    circuitReason = reason;
+    circuitResetTime = Date.now() + cooldownMs;
+    console.warn(`[VERO BG] 🔴 Circuit OPEN: ${reason}. Retry after ${Math.round(cooldownMs / 1000)}s`);
+}
+
+function checkCircuit() {
+    if (!circuitOpen) return true; // circuit closed, OK to proceed
+    if (Date.now() > circuitResetTime) {
+        console.log('[VERO BG] 🟢 Circuit reset — will try one request');
+        circuitOpen = false;
+        circuitReason = '';
+        return true;
+    }
+    return false; // still open, do NOT make request
+}
 
 // Initialise on first install
 chrome.runtime.onInstalled.addListener(() => {
@@ -35,15 +61,43 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case 'GEMINI_REQUEST':
             (async () => {
                 try {
+                    // Check circuit breaker FIRST
+                    if (!checkCircuit()) {
+                        sendResponse({ success: false, error: `⏸️ API paused: ${circuitReason}. Auto-retry in ${Math.round((circuitResetTime - Date.now()) / 1000)}s` });
+                        return;
+                    }
                     const key = await getGeminiKey();
                     if (!key) {
-                        sendResponse({ success: false, error: 'No Gemini API key configured. Click the VERO popup icon to add your key.' });
+                        // Don't spam — open circuit for 5 min if no key
+                        openCircuit('No API key configured', 5 * 60 * 1000);
+                        sendResponse({ success: false, error: '🔑 No Gemini API key. Click VERO popup → paste key → Save.' });
                         return;
                     }
                     const data = await callGemini(msg.prompt, key);
+                    // Success! Reset failure count
+                    consecutiveFails = 0;
                     sendResponse({ success: true, data });
                 } catch (err) {
-                    sendResponse({ success: false, error: err.toString() });
+                    const errStr = err.toString();
+
+                    // 403 = leaked key → permanent stop until user adds new key
+                    if (errStr.includes('403') || errStr.includes('leaked')) {
+                        openCircuit('API key is disabled (leaked). Create a NEW key from a NEW Google Cloud project.', 30 * 60 * 1000);
+                        sendResponse({ success: false, error: '🔑 API key disabled. Go to aistudio.google.com/apikey → Create key in NEW project → paste in VERO popup.' });
+                        return;
+                    }
+
+                    // 429 = rate limited → exponential backoff
+                    if (errStr.includes('429') || errStr.includes('quota') || errStr.includes('RESOURCE_EXHAUSTED')) {
+                        consecutiveFails++;
+                        // Exponential backoff: 60s, 120s, 240s, 480s, max 10 min
+                        const backoffMs = Math.min(60000 * Math.pow(2, consecutiveFails - 1), 10 * 60 * 1000);
+                        openCircuit(`Rate limited (attempt ${consecutiveFails})`, backoffMs);
+                        sendResponse({ success: false, error: `⏸️ Rate limited. Pausing ${Math.round(backoffMs / 1000)}s.` });
+                        return;
+                    }
+
+                    sendResponse({ success: false, error: errStr });
                 }
             })();
             return true;
