@@ -1,7 +1,6 @@
 // VERO – Background Service Worker
 // Proxies Gemini, NewsAPI, and PIB requests from content scripts
 
-const GEMINI_KEY = 'AIzaSyBQ7Mjoahx1BXChaofqafBEgs3Tj_RdlcU';
 const NEWSAPI_KEY = '241b1aba62fd438aa81630a8e35f666e';
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
@@ -18,15 +17,35 @@ chrome.runtime.onInstalled.addListener(() => {
         if (!items.stats) chrome.storage.local.set({ stats: DEFAULT_STATS });
         if (items.enabled === undefined) chrome.storage.local.set({ enabled: true, whatsapp: true, instagram: true });
     });
+    console.log('[VERO BG] Service worker installed');
 });
+
+// Helper: get the Gemini key from storage
+function getGeminiKey() {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['geminiKey'], (r) => {
+            resolve(r.geminiKey || '');
+        });
+    });
+}
 
 // ─── Message Router ────────────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     switch (msg.type) {
         case 'GEMINI_REQUEST':
-            callGemini(msg.prompt)
-                .then(data => sendResponse({ success: true, data }))
-                .catch(err => sendResponse({ success: false, error: err.toString() }));
+            (async () => {
+                try {
+                    const key = await getGeminiKey();
+                    if (!key) {
+                        sendResponse({ success: false, error: 'No Gemini API key configured. Click the VERO popup icon to add your key.' });
+                        return;
+                    }
+                    const data = await callGemini(msg.prompt, key);
+                    sendResponse({ success: true, data });
+                } catch (err) {
+                    sendResponse({ success: false, error: err.toString() });
+                }
+            })();
             return true;
 
         case 'NEWS_CONTEXT':
@@ -56,8 +75,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 // ─── Gemini API ────────────────────────────────────────────
-async function callGemini(prompt) {
-    const url = `${GEMINI_URL}?key=${GEMINI_KEY}`;
+async function callGemini(prompt, apiKey) {
+    const url = `${GEMINI_URL}?key=${apiKey}`;
     const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +90,7 @@ async function callGemini(prompt) {
     return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-// ─── NewsAPI for live context ──────────────────────────────
+// ─── NewsAPI ───────────────────────────────────────────────
 async function fetchNewsContext(query) {
     const q = encodeURIComponent(query.substring(0, 100));
     const url = `https://newsapi.org/v2/everything?q=${q}&sortBy=relevancy&pageSize=3&apiKey=${NEWSAPI_KEY}`;
@@ -86,10 +105,8 @@ async function fetchNewsContext(query) {
     }));
 }
 
-// ─── PIB Fact Check (scrape-friendly endpoint) ─────────────
+// ─── PIB Fact Check ────────────────────────────────────────
 async function fetchPIBFactCheck(query) {
-    // PIB doesn't have a public API, but we can search it via Google
-    // For the extension we return a search link the user can follow
     const q = encodeURIComponent(query.substring(0, 80));
     return {
         searchUrl: `https://factcheck.pib.gov.in/?s=${q}`,

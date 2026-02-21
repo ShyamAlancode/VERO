@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GEMINI_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBQ7Mjoahx1BXChaofqafBEgs3Tj_RdlcU")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")  # Set in Render dashboard or .env
 NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "241b1aba62fd438aa81630a8e35f666e")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
