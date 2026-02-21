@@ -1,5 +1,5 @@
-// VERO – Instagram Content Script v1.2
-// Caption fact-checking + TensorFlow.js deepfake detection
+// VERO – Instagram Content Script v1.3
+// Caption fact-checking + Canvas-based deepfake detection (no external deps)
 
 (function () {
     'use strict';
@@ -7,32 +7,18 @@
 
     let enabled = true;
     let instagramEnabled = true;
-    let tfLoaded = false;
 
     chrome.storage.local.get(['enabled', 'instagram'], (r) => {
         enabled = r.enabled !== false;
         instagramEnabled = r.instagram !== false;
         console.log('[VERO] Settings loaded:', { enabled, instagramEnabled });
-        if (enabled && instagramEnabled) {
-            loadTensorFlow();
-            waitForInstagram();
-        }
+        if (enabled && instagramEnabled) waitForInstagram();
     });
 
     chrome.storage.onChanged.addListener((c) => {
         if (c.enabled) enabled = c.enabled.newValue;
         if (c.instagram) instagramEnabled = c.instagram.newValue;
     });
-
-    // ─── Load TensorFlow.js ─────────────────────────────────
-    function loadTensorFlow() {
-        if (window.tf) { tfLoaded = true; return; }
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js';
-        script.onload = () => { tfLoaded = true; console.log('[VERO] TensorFlow.js loaded ✓'); };
-        script.onerror = () => console.warn('[VERO] TensorFlow.js CDN blocked by CSP — deepfake detection disabled');
-        (document.head || document.documentElement).appendChild(script);
-    }
 
     // ─── Wait for Instagram ─────────────────────────────────
     function waitForInstagram() {
@@ -59,14 +45,11 @@
     }
 
     function scanAll() {
-        console.log('[VERO] Scanning Instagram content...');
-        // Scan captions
         const articles = document.querySelectorAll('article');
-        console.log(`[VERO] Found ${articles.length} articles`);
+        console.log(`[VERO] Scanning: ${articles.length} articles`);
         articles.forEach(scanCaption);
-        // Scan videos
         const videos = document.querySelectorAll('video');
-        console.log(`[VERO] Found ${videos.length} videos`);
+        console.log(`[VERO] Scanning: ${videos.length} videos`);
         videos.forEach(scanReel);
     }
 
@@ -91,19 +74,15 @@
         if (article.hasAttribute('data-vero-caption')) return;
         article.setAttribute('data-vero-caption', 'pending');
 
-        // Try multiple selectors for Instagram captions
         const captionEl = article.querySelector('h1') ||
             article.querySelector('span[dir="auto"]') ||
             article.querySelector('div[style] > span') ||
             article.querySelector('span');
 
         const text = captionEl?.innerText?.trim();
-        if (!text || text.length < 20) {
-            article.setAttribute('data-vero-caption', 'skip');
-            return;
-        }
+        if (!text || text.length < 20) { article.setAttribute('data-vero-caption', 'skip'); return; }
 
-        console.log(`[VERO] 📝 Instagram caption (${text.length} chars): "${text.substring(0, 60)}..."`);
+        console.log(`[VERO] 📝 Caption (${text.length} chars): "${text.substring(0, 60)}..."`);
 
         try {
             let newsContext = '';
@@ -127,7 +106,6 @@ Respond ONLY with JSON (no markdown):
             const result = parseGeminiJSON(res.data);
             console.log('[VERO] 📊 Caption result:', result);
             article.setAttribute('data-vero-caption', result.label?.toLowerCase() || 'unknown');
-
             bgMessage('UPDATE_STATS', { field: 'message', flagged: result.isFake || result.isMisleading });
 
             if (result.isFake || result.isMisleading) {
@@ -144,7 +122,7 @@ Respond ONLY with JSON (no markdown):
         }
     }
 
-    // ─── Reel / Deepfake Detection ─────────────────────────
+    // ─── Reel / Deepfake Detection (Pure Canvas – no TF.js) ──
     function scanReel(video) {
         if (video.hasAttribute('data-vero-reel')) return;
         video.setAttribute('data-vero-reel', 'pending');
@@ -157,38 +135,82 @@ Respond ONLY with JSON (no markdown):
 
     async function processReel(video, container) {
         showReelIndicator(container);
-        console.log('[VERO] 🎬 Analyzing reel frame...');
+        console.log('[VERO] 🎬 Analyzing reel frame (Canvas)...');
 
         try {
+            const w = Math.min(video.videoWidth || 320, 320);
+            const h = Math.min(video.videoHeight || 240, 240);
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, w, h);
 
-            let result = { isDeepfake: false, confidence: 0, label: 'AUTHENTIC' };
+            const imageData = ctx.getImageData(0, 0, w, h);
+            const pixels = imageData.data; // RGBA array
 
-            if (tfLoaded && window.tf) {
-                const tensor = window.tf.browser.fromPixels(canvas);
-                const mean = tensor.mean().dataSync()[0];
-                const variance = tensor.sub(mean).square().mean().dataSync()[0];
-                const resized = window.tf.image.resizeBilinear(tensor.expandDims(0), [64, 64]).squeeze();
-                const diff = resized.slice([0, 0, 0], [63, 63, 3]).sub(resized.slice([1, 1, 0], [63, 63, 3]));
-                const edgeEnergy = diff.abs().mean().dataSync()[0];
-                const score = (variance < 2000 ? 30 : 0) + (edgeEnergy < 8 ? 40 : 0) + (mean > 200 || mean < 30 ? 20 : 0);
+            // ── Pixel Analysis (pure JS, no TF.js) ──
+            let totalR = 0, totalG = 0, totalB = 0;
+            let count = pixels.length / 4;
 
-                result = {
-                    isDeepfake: score >= 50,
-                    confidence: Math.min(score + 20, 99),
-                    label: score >= 50 ? 'DEEPFAKE' : 'AUTHENTIC',
-                    explanation: score >= 50 ? 'Unusual pixel patterns — possible AI generation' : 'Natural video patterns'
-                };
-                tensor.dispose(); resized.dispose(); diff.dispose();
-                console.log(`[VERO] TF.js score: ${score}, result: ${result.label}`);
-            } else {
-                console.log('[VERO] TF.js not available, skipping deepfake analysis');
-                result = { isDeepfake: false, confidence: 0, label: 'UNKNOWN', explanation: 'TF.js not loaded' };
+            // 1. Calculate mean RGB
+            for (let i = 0; i < pixels.length; i += 4) {
+                totalR += pixels[i];
+                totalG += pixels[i + 1];
+                totalB += pixels[i + 2];
             }
+            const meanR = totalR / count;
+            const meanG = totalG / count;
+            const meanB = totalB / count;
+            const overallMean = (meanR + meanG + meanB) / 3;
+
+            // 2. Calculate variance
+            let varianceSum = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+                const diff = ((pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3) - overallMean;
+                varianceSum += diff * diff;
+            }
+            const variance = varianceSum / count;
+
+            // 3. Calculate edge energy (gradient magnitude)
+            let edgeSum = 0, edgeCount = 0;
+            for (let y = 0; y < h - 1; y++) {
+                for (let x = 0; x < w - 1; x++) {
+                    const idx = (y * w + x) * 4;
+                    const idxR = idx + 4;        // right neighbor
+                    const idxD = ((y + 1) * w + x) * 4; // down neighbor
+                    for (let c = 0; c < 3; c++) {
+                        const dx = Math.abs(pixels[idx + c] - pixels[idxR + c]);
+                        const dy = Math.abs(pixels[idx + c] - pixels[idxD + c]);
+                        edgeSum += dx + dy;
+                    }
+                    edgeCount++;
+                }
+            }
+            const edgeEnergy = edgeCount > 0 ? edgeSum / (edgeCount * 3) : 0;
+
+            // 4. Color uniformity check
+            const colorRange = Math.max(meanR, meanG, meanB) - Math.min(meanR, meanG, meanB);
+
+            // 5. Score calculation
+            let score = 0;
+            if (variance < 1500) score += 25;       // Very low variance = suspicious
+            if (variance < 800) score += 15;        // Extremely low = very suspicious
+            if (edgeEnergy < 6) score += 30;        // Smooth edges = AI-generated
+            if (edgeEnergy < 3) score += 10;        // Very smooth
+            if (overallMean > 210 || overallMean < 25) score += 15;  // Extreme brightness
+            if (colorRange < 10) score += 10;        // Very uniform colors
+
+            const isDeepfake = score >= 50;
+
+            console.log(`[VERO] 🔬 Frame analysis: variance=${variance.toFixed(0)}, edgeEnergy=${edgeEnergy.toFixed(1)}, mean=${overallMean.toFixed(0)}, colorRange=${colorRange.toFixed(0)}, score=${score}`);
+
+            const result = {
+                isDeepfake,
+                confidence: Math.min(score + 15, 99),
+                label: isDeepfake ? 'DEEPFAKE' : 'AUTHENTIC',
+                explanation: isDeepfake ? 'Unusual pixel uniformity — possible AI-generated content' : 'Natural video patterns detected'
+            };
 
             removeReelIndicator(container);
             video.setAttribute('data-vero-reel', result.label.toLowerCase());
@@ -201,6 +223,8 @@ Respond ONLY with JSON (no markdown):
                 banner.innerHTML = `<span style="font-size:18px;">⚠️</span><div><strong>DEEPFAKE DETECTED</strong><div style="font-size:11px;margin-top:2px;">${result.explanation} · ${result.confidence}%</div></div>`;
                 container.style.position = 'relative';
                 container.appendChild(banner);
+            } else {
+                console.log(`[VERO] ✅ Reel looks authentic (score: ${score})`);
             }
         } catch (err) {
             console.error('[VERO] Reel error:', err);
