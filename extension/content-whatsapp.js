@@ -13,7 +13,7 @@
     let processing = false;
 
     async function enqueue(el) {
-        if (el.hasAttribute('data-vero')) return;
+        if (contextDead || el.hasAttribute('data-vero')) return;
         el.setAttribute('data-vero', 'queued');
         queue.push(el);
         if (!processing) drainQueue();
@@ -77,9 +77,9 @@
 
     function startScanning() {
         initObserver();
-        setTimeout(() => scanAllMessages(), 3000);
+        setTimeout(() => { if (!contextDead) scanAllMessages(); }, 3000);
         // Scan every 30s instead of 10s to reduce load
-        setInterval(() => { if (enabled && whatsappEnabled) scanAllMessages(); }, 30000);
+        setInterval(() => { if (!contextDead && enabled && whatsappEnabled) scanAllMessages(); }, 30000);
     }
 
     // ─── Find message elements ────────────────────────────────

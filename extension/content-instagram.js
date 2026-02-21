@@ -13,7 +13,7 @@
     let processing = false;
 
     function enqueueCaption(article) {
-        if (article.hasAttribute('data-vero-caption')) return;
+        if (contextDead || article.hasAttribute('data-vero-caption')) return;
         article.setAttribute('data-vero-caption', 'queued');
         queue.push({ type: 'caption', el: article });
         if (!processing) drainQueue();
@@ -73,9 +73,9 @@
 
     function startScanning() {
         initObserver();
-        setTimeout(() => scanAll(), 3000);
+        setTimeout(() => { if (!contextDead) scanAll(); }, 3000);
         // Scan every 30s instead of 12s
-        setInterval(() => { if (enabled && instagramEnabled) scanAll(); }, 30000);
+        setInterval(() => { if (!contextDead && enabled && instagramEnabled) scanAll(); }, 30000);
     }
 
     function scanAll() {
@@ -170,7 +170,7 @@ Respond ONLY with JSON (no markdown):
 
     // ─── Reel / Deepfake Detection (Pure Canvas) ─────────────
     function scanReel(video) {
-        if (video.hasAttribute('data-vero-reel')) return;
+        if (contextDead || video.hasAttribute('data-vero-reel')) return;
         video.setAttribute('data-vero-reel', 'pending');
         const container = video.closest('article') || video.closest('[role="presentation"]') || video.parentElement;
         if (!container) return;
