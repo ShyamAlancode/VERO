@@ -1,54 +1,40 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    VERO – Injected Styles (WhatsApp Web & Instagram)
-   Uses Catamaran + Google Sans local fonts via web_accessible_resources
 ───────────────────────────────────────────────────────────────────────────── */
-
-@font-face {
-    font-family: 'Catamaran';
-    src: url('chrome-extension://__MSG_@@extension_id__/fonts/Catamaran-Variable.ttf') format('truetype');
-    font-weight: 100 900;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Google Sans';
-    src: url('chrome-extension://__MSG_@@extension_id__/fonts/GoogleSans-Variable.ttf') format('truetype');
-    font-weight: 100 900;
-    font-display: swap;
-}
 
 /* ── Badge (WhatsApp messages & Instagram captions) ─────── */
 .vero-warning-badge {
-    font-family: 'Google Sans', 'Catamaran', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     animation: vero-slide-in 0.25s ease;
     font-size: 12px;
     padding: 8px 12px;
     margin: 6px 0;
     border-radius: 8px;
-    display: inline-block;
+    display: block !important;
     max-width: 100%;
-    z-index: 9999;
+    z-index: 99999;
     pointer-events: auto;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     line-height: 1.4;
+    clear: both;
 }
 
 .vero-warning-badge.fake {
-    background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
-    border-left: 4px solid #e53935;
-    color: #b71c1c;
+    background: #ffebee !important;
+    border-left: 4px solid #e53935 !important;
+    color: #b71c1c !important;
 }
 
 .vero-warning-badge.caution {
-    background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
-    border-left: 4px solid #ff9800;
-    color: #e65100;
+    background: #fff8e1 !important;
+    border-left: 4px solid #ff9800 !important;
+    color: #e65100 !important;
 }
 
 .vero-warning-badge.verified {
-    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-    border-left: 4px solid #43a047;
-    color: #1b5e20;
+    background: #e8f5e9 !important;
+    border-left: 4px solid #43a047 !important;
+    color: #1b5e20 !important;
 }
 
 /* ── Reel Banner (Instagram video overlay) ──────────────── */
@@ -59,48 +45,45 @@
     right: 16px;
     padding: 12px 18px;
     border-radius: 24px;
-    font-family: 'Google Sans', 'Catamaran', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 13px;
     font-weight: 500;
-    z-index: 10000;
+    z-index: 99999;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     animation: vero-fade-in 0.3s ease;
     pointer-events: auto;
-    color: white;
-    display: flex;
+    color: white !important;
+    display: flex !important;
     align-items: center;
     gap: 12px;
 }
 
 .vero-reel-banner.deepfake {
-    background: rgba(198, 40, 40, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(198, 40, 40, 0.92) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .vero-reel-banner.misleading {
-    background: rgba(230, 81, 0, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(230, 81, 0, 0.92) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* ── Scanning Indicator ─────────────────────────────────── */
 .vero-pulse-shield {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 32px;
-    height: 32px;
-    background: rgba(26, 115, 232, 0.25);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: vero-pulse 1.4s cubic-bezier(.4, 0, .2, 1) infinite;
-    z-index: 9999;
+    position: absolute !important;
+    width: 28px !important;
+    height: 28px !important;
+    background: rgba(26, 115, 232, 0.35) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    animation: vero-pulse 1.4s cubic-bezier(.4, 0, .2, 1) infinite !important;
+    z-index: 99999 !important;
     pointer-events: none;
-    backdrop-filter: blur(4px);
-    font-size: 16px;
+    font-size: 14px;
 }
 
 /* ── Source Link ─────────────────────────────────────────── */

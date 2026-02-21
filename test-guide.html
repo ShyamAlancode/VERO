@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO – Test Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f1117;
+            color: #e4e7ec;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        h1 span {
+            color: #4285f4;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 40px;
+            font-size: 15px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin: 36px 0 16px;
+            color: #4285f4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2 .num {
+            background: #4285f4;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        p {
+            color: #9ca3af;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .msg-card {
+            background: #1a1f2e;
+            border: 1px solid #2d3348;
+            border-radius: 12px;
+            padding: 18px;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+
+        .msg-card:hover {
+            border-color: #4285f4;
+            transform: translateY(-2px);
+        }
+
+        .msg-card .tag {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .tag.fake {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .tag.misleading {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+
+        .tag.real {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .msg-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d5db;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #1a73e8;
+        }
+
+        .copy-btn.copied {
+            background: #22c55e;
+        }
+
+        .step-box {
+            background: #1a1f2e;
+            border: 1px solid #2d3348;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .step-box ol {
+            padding-left: 20px;
+        }
+
+        .step-box li {
+            margin-bottom: 10px;
+            color: #d1d5db;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .step-box li strong {
+            color: white;
+        }
+
+        .highlight {
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        .warn {
+            color: #f59e0b;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #2d3348;
+            margin: 40px 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .badge.wa {
+            background: rgba(37, 211, 102, 0.15);
+            color: #25d366;
+        }
+
+        .badge.ig {
+            background: rgba(225, 48, 108, 0.15);
+            color: #e1306c;
+        }
+
+        .expected {
+            background: #111827;
+            border-left: 3px solid #4285f4;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .expected strong {
+            color: #e4e7ec;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛡️ VERO <span>Test Guide</span></h1>
+        <p class="subtitle">Copy-paste these messages into WhatsApp Web or browse Instagram to test VERO's detection.
+        </p>
+
+        <!-- ── WhatsApp Testing ──────────────────── -->
+        <h2><span class="num">1</span> WhatsApp Web Testing <span class="badge wa">💬 WhatsApp</span></h2>
+        <div class="step-box">
+            <ol>
+                <li>Open <a href="https://web.whatsapp.com" target="_blank" class="highlight">web.whatsapp.com</a> in
+                    Chrome</li>
+                <li>Scan the QR code with your phone</li>
+                <li>Open any chat (you can message yourself via "Message Yourself" or a friend)</li>
+                <li><strong>Copy a test message below</strong> and send it in the chat</li>
+                <li>Wait 1-2 seconds — VERO will scan and inject a badge if it's flagged</li>
+                <li>Check the <span class="highlight">VERO popup</span> (click the 🛡️ icon) to see stat counters update
+                </li>
+            </ol>
+        </div>
+
+        <p><strong>Test Messages</strong> — click the <strong>Copy</strong> button to copy, then paste in WhatsApp:</p>
+
+        <div class="card-grid">
+            <!-- Fake 1 -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag fake">🔴 FAKE NEWS</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">🚨 BREAKING: Government announces free ₹5000 for every citizen! Apply now at
+                    govscheme-free.in before March 1st. Forward this to all your friends and family! 🇮🇳💰</div>
+                <div class="expected">
+                    <strong>Expected:</strong> ❌ FAKE badge — "govt scheme" and "free cash" trigger detection. PIB Fact
+                    Check link should appear.
+                </div>
+            </div>
+
+            <!-- Fake 2 -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag fake">🔴 FAKE NEWS</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">⚠️ URGENT: NASA confirms a giant asteroid will hit Earth on March 15, 2026!
+                    Scientists are keeping it secret from the public. Share this before they delete it! 🌍☄️</div>
+                <div class="expected">
+                    <strong>Expected:</strong> ❌ FAKE badge — Alarmist claim with no credible source. Gemini should flag
+                    with high confidence.
+                </div>
+            </div>
+
+            <!-- Fake 3 -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag fake">🔴 FAKE NEWS</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">CONFIRMED: Drinking warm lemon water with turmeric every morning cures diabetes
+                    completely. Big pharma has been hiding this for decades! Share with everyone you know 🍋</div>
+                <div class="expected">
+                    <strong>Expected:</strong> ❌ FAKE badge — Health misinformation. Gemini should flag as dangerous
+                    medical claim.
+                </div>
+            </div>
+
+            <!-- Misleading -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag misleading">🟡 MISLEADING</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">Did you know? India's GDP grew by 150% last year, making it the fastest growing
+                    economy in history! Even China is far behind now. Proud moment! 🇮🇳📈</div>
+                <div class="expected">
+                    <strong>Expected:</strong> ⚠️ MISLEADING badge — Exaggerated statistics. NewsAPI may provide real
+                    GDP data for context.
+                </div>
+            </div>
+
+            <!-- Misleading 2 -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag misleading">🟡 MISLEADING</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">Official announcement: WhatsApp will start charging ₹50/month from April 2026.
+                    This was confirmed by Mark Zuckerberg in a press conference yesterday. Save this message as proof!
+                </div>
+                <div class="expected">
+                    <strong>Expected:</strong> ⚠️ MISLEADING or ❌ FAKE — WhatsApp charging hoax. Common forwarded
+                    misinformation.
+                </div>
+            </div>
+
+            <!-- Real / Verified -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag real">🟢 SHOULD PASS</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">Hey! Are we still meeting at 6pm today for dinner? I was thinking we could try
+                    that new Italian restaurant near MG Road. Let me know!</div>
+                <div class="expected">
+                    <strong>Expected:</strong> No badge — This is a normal personal message. VERO should not flag it.
+                </div>
+            </div>
+
+            <!-- Real 2 -->
+            <div class="msg-card" onclick="copyMsg(this)">
+                <span class="tag real">🟢 SHOULD PASS</span>
+                <button class="copy-btn">Copy</button>
+                <div class="msg-text">The ISRO successfully launched the Chandrayaan-4 mission today from the Satish
+                    Dhawan Space Centre. The spacecraft is expected to reach lunar orbit in 45 days.</div>
+                <div class="expected">
+                    <strong>Expected:</strong> No badge or ✅ VERIFIED — Factual-sounding news. Gemini may verify against
+                    NewsAPI context.
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ── Instagram Testing ─────────────────── -->
+        <h2><span class="num">2</span> Instagram Testing <span class="badge ig">📸 Instagram</span></h2>
+        <div class="step-box">
+            <ol>
+                <li>Open <a href="https://www.instagram.com" target="_blank" class="highlight">instagram.com</a> in
+                    Chrome</li>
+                <li>Log in to your account</li>
+                <li><strong>Scroll through your feed</strong> — VERO will auto-scan captions</li>
+                <li>Open any <strong>Reel</strong> — you'll see the 🛡️ pulse indicator while TensorFlow.js analyzes the
+                    frame</li>
+                <li>If a deepfake is detected, a red banner appears at the bottom of the Reel</li>
+                <li>Captions with suspicious content will get warning badges</li>
+            </ol>
+        </div>
+        <p><strong>Tips for Instagram testing:</strong></p>
+        <div class="step-box">
+            <ol>
+                <li>Search for <span class="highlight">#breakingnews</span> or <span class="highlight">#factcheck</span>
+                    — these often have misinformation in captions</li>
+                <li>Watch Reels from <span class="highlight">#aiart</span> or <span class="highlight">#deepfake</span> —
+                    these may trigger the TF.js detector</li>
+                <li>The deepfake detection uses pixel analysis, so AI-generated content with smooth/unusual patterns may
+                    be flagged</li>
+            </ol>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ── Backend Testing ───────────────────── -->
+        <h2><span class="num">3</span> Backend API Testing</h2>
+        <p>If you deployed to Render, test the API directly:</p>
+        <div class="step-box">
+            <ol>
+                <li>Open your Render dashboard to get your API URL (e.g. <code>https://vero-api.onrender.com</code>)
+                </li>
+                <li>Test health: visit <code>/health</code> in browser</li>
+                <li>Test verify endpoint with <strong>curl</strong> or Postman:<br><br>
+                    <code
+                        style="background:#111827;padding:8px 12px;border-radius:6px;display:block;color:#4285f4;font-size:13px;white-space:pre-wrap;">curl -X POST https://YOUR-URL/api/verify \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Government gives free 5000 to all citizens"}'</code>
+                </li>
+            </ol>
+        </div>
+
+        <hr class="divider">
+
+        <!-- ── Popup Check ───────────────────────── -->
+        <h2><span class="num">4</span> Check the Popup</h2>
+        <div class="step-box">
+            <ol>
+                <li>Click the <strong>🛡️ VERO</strong> icon in your Chrome toolbar</li>
+                <li>Verify: Both toggles should show <span class="highlight">● Active</span></li>
+                <li>After testing, the <strong>Statistics</strong> grid should update:
+                    <ul style="margin-top:8px;">
+                        <li><strong>Messages Checked</strong> – counts scanned WhatsApp messages</li>
+                        <li><strong>Fakes Flagged</strong> – count of detected fake/misleading content</li>
+                        <li><strong>Reels Scanned</strong> – Instagram video frames analyzed</li>
+                        <li><strong>Deepfakes</strong> – flagged AI-generated videos</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function copyMsg(card) {
+            const text = card.querySelector('.msg-text').textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = card.querySelector('.copy-btn');
+                btn.textContent = '✓ Copied';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+            });
+        }
+    </script>
+</body>
+
+</html>
