@@ -1,5 +1,5 @@
-// VERO – WhatsApp Web Content Script v1.2
-// Real-time misinformation detection using Gemini + NewsAPI + PIB
+// VERO – WhatsApp Web Content Script v1.3
+// Real-time misinformation detection with rate limiting
 
 (function () {
     'use strict';
@@ -8,6 +8,30 @@
     let enabled = true;
     let whatsappEnabled = true;
 
+    // ─── Rate Limiter: process 1 message at a time, 3s gap ──
+    const queue = [];
+    let processing = false;
+
+    async function enqueue(el) {
+        if (el.hasAttribute('data-vero')) return;
+        el.setAttribute('data-vero', 'queued');
+        queue.push(el);
+        if (!processing) drainQueue();
+    }
+
+    async function drainQueue() {
+        processing = true;
+        while (queue.length > 0) {
+            const el = queue.shift();
+            await processMsg(el);
+            await sleep(3000); // 3s between requests to stay under free-tier limits
+        }
+        processing = false;
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ─── Init ──────────────────────────────────────────────────
     chrome.storage.local.get(['enabled', 'whatsapp'], (r) => {
         enabled = r.enabled !== false;
         whatsappEnabled = r.whatsapp !== false;
@@ -27,80 +51,70 @@
         let attempts = 0;
         const poll = setInterval(() => {
             attempts++;
-            // Multiple possible selectors for WhatsApp app container
             const appEl = document.querySelector('#app') ||
                 document.querySelector('[data-app]') ||
                 document.querySelector('#pane-side') ||
                 document.querySelector('[role="application"]');
-
             if (appEl) {
                 clearInterval(poll);
                 console.log(`%c[VERO] ✅ WhatsApp DOM detected after ${attempts} attempts`, 'color: #34a853; font-weight: bold;');
                 startScanning();
             } else if (attempts > 60) {
                 clearInterval(poll);
-                console.warn('[VERO] ⚠️ Gave up waiting for WhatsApp DOM after 60 attempts');
+                console.warn('[VERO] ⚠️ Gave up waiting for WhatsApp DOM');
             }
         }, 2000);
     }
 
     function startScanning() {
-        // Set up the observer FIRST on the whole body
         initObserver();
-        // Then do an initial scan
         setTimeout(() => scanAllMessages(), 3000);
-        // And periodically re-scan in case observer misses anything
-        setInterval(() => {
-            if (enabled && whatsappEnabled) scanAllMessages();
-        }, 10000);
+        // Scan every 30s instead of 10s to reduce load
+        setInterval(() => { if (enabled && whatsappEnabled) scanAllMessages(); }, 30000);
     }
 
-    // ─── Find all message containers ──────────────────────────
+    // ─── Find message elements ────────────────────────────────
     function findMessageElements() {
-        // WhatsApp uses several possible structures — try all of them
         const selectors = [
             '[data-testid="msg-container"]',
             '.message-in',
             '.message-out',
             'div[class*="message-"]',
-            'div[data-id]',  // messages have data-id attributes
-            'div.focusable-list-item', // chat list items
+            'div[data-id]',
+            'div.focusable-list-item',
         ];
-
         let elements = [];
         for (const sel of selectors) {
             const found = document.querySelectorAll(sel);
             if (found.length > 0) {
                 console.log(`[VERO] Found ${found.length} elements with selector: ${sel}`);
-                elements = [...elements, ...found];
-                break; // Use the first selector that works
+                elements = [...found];
+                break;
             }
         }
-
-        // Fallback: find elements that contain text with span[dir]
         if (elements.length === 0) {
             const spans = document.querySelectorAll('span[dir="ltr"], span[dir="rtl"]');
             console.log(`[VERO] Fallback: found ${spans.length} text spans`);
             spans.forEach(span => {
-                // Walk up to find a reasonable container
                 let parent = span.parentElement;
                 for (let i = 0; i < 6 && parent; i++) {
                     if (parent.getAttribute('data-id') || parent.getAttribute('data-testid')?.includes('msg')) {
-                        elements.push(parent);
-                        break;
+                        elements.push(parent); break;
                     }
                     parent = parent.parentElement;
                 }
             });
         }
-
-        return [...new Set(elements)]; // deduplicate
+        return [...new Set(elements)];
     }
 
     function scanAllMessages() {
         const messages = findMessageElements();
-        console.log(`[VERO] Scanning ${messages.length} message elements...`);
-        messages.forEach(processMsg);
+        // Only process the LAST 5 unprocessed messages (most recent)
+        const unprocessed = messages.filter(m => !m.hasAttribute('data-vero'));
+        const toProcess = unprocessed.slice(-5);
+        console.log(`[VERO] Scanning: ${messages.length} total, ${unprocessed.length} unprocessed, queuing ${toProcess.length}`);
+        toProcess.forEach(enqueue);
     }
 
     // ─── MutationObserver ─────────────────────────────────────
@@ -111,14 +125,12 @@
             for (const m of muts) {
                 for (const n of m.addedNodes) {
                     if (n.nodeType !== 1) continue;
-                    // Check if the node itself is a message
-                    if (hasTextContent(n)) processMsg(n);
-                    // Check children
+                    if (hasTextContent(n)) enqueue(n);
                     const children = n.querySelectorAll?.('[data-testid="msg-container"], div[data-id], span[dir]');
                     if (children) {
                         children.forEach(child => {
                             const container = findMsgContainer(child);
-                            if (container) processMsg(container);
+                            if (container) enqueue(container);
                         });
                     }
                 }
@@ -130,9 +142,7 @@
         let parent = el;
         for (let i = 0; i < 8 && parent; i++) {
             if (parent.getAttribute('data-id') || parent.getAttribute('data-testid')?.includes('msg') ||
-                parent.classList?.contains('message-in') || parent.classList?.contains('message-out')) {
-                return parent;
-            }
+                parent.classList?.contains('message-in') || parent.classList?.contains('message-out')) return parent;
             parent = parent.parentElement;
         }
         return el.closest('[data-testid*="msg"]') || el.closest('[data-id]');
@@ -144,25 +154,20 @@
 
     // ─── Process a single message ─────────────────────────────
     async function processMsg(el) {
-        if (!el || el.hasAttribute('data-vero')) return;
-        el.setAttribute('data-vero', 'pending');
+        if (!el || el.getAttribute('data-vero') === 'done' || el.getAttribute('data-vero') === 'skip') return;
+        el.setAttribute('data-vero', 'processing');
 
-        // Extract text content from the message
         const text = extractText(el);
-        if (!text || text.length < 15) {
-            el.setAttribute('data-vero', 'skip');
-            return;
-        }
+        if (!text || text.length < 15) { el.setAttribute('data-vero', 'skip'); return; }
         if (/waiting for this message|end-to-end encrypted|joined using|this chat|security code/i.test(text)) {
-            el.setAttribute('data-vero', 'skip');
-            return;
+            el.setAttribute('data-vero', 'skip'); return;
         }
 
         console.log(`[VERO] 📝 Processing message (${text.length} chars): "${text.substring(0, 60)}..."`);
         showIndicator(el);
 
         try {
-            // Step 1: Get NewsAPI context
+            // Step 1: NewsAPI context
             let newsContext = '';
             try {
                 const newsRes = await bgMessage('NEWS_CONTEXT', { query: text.substring(0, 100) });
@@ -203,11 +208,9 @@ Be strict: if unsure, return label "UNKNOWN".`;
             const result = parseGeminiJSON(geminiRes.data);
             console.log('[VERO] 📊 Result:', result);
 
-            if (pibInfo?.searchUrl && result.label !== 'VERIFIED') {
-                result.pibUrl = pibInfo.searchUrl;
-            }
+            if (pibInfo?.searchUrl && result.label !== 'VERIFIED') result.pibUrl = pibInfo.searchUrl;
 
-            el.setAttribute('data-vero', result.label?.toLowerCase() || 'unknown');
+            el.setAttribute('data-vero', 'done');
             bgMessage('UPDATE_STATS', { field: 'message', flagged: result.isFake || result.isMisleading });
 
             if (result.isFake || result.isMisleading) {
@@ -223,36 +226,26 @@ Be strict: if unsure, return label "UNKNOWN".`;
         }
     }
 
-    // ─── Extract text from a message element ──────────────────
+    // ─── Extract text ────────────────────────────────────────
     function extractText(el) {
-        // Try multiple WhatsApp text selectors
         const textSelectors = [
-            'span.selectable-text span',     // Common WhatsApp text container
-            '.copyable-text span[dir]',
-            '[data-testid="text-message"]',
-            'span[dir="ltr"]',
-            'span[dir="rtl"]',
-            'span.selectable-text',
+            'span.selectable-text span', '.copyable-text span[dir]',
+            '[data-testid="text-message"]', 'span[dir="ltr"]',
+            'span[dir="rtl"]', 'span.selectable-text',
         ];
-
         for (const sel of textSelectors) {
             const found = el.querySelector(sel);
-            if (found?.innerText?.trim()?.length > 10) {
-                return found.innerText.trim();
-            }
+            if (found?.innerText?.trim()?.length > 10) return found.innerText.trim();
         }
-
-        // Last resort: get all direct text from spans
         const allSpans = el.querySelectorAll('span[dir]');
         for (const sp of allSpans) {
             const t = sp.innerText?.trim();
             if (t && t.length > 15) return t;
         }
-
         return null;
     }
 
-    // ─── UI Injection ─────────────────────────────────────────
+    // ─── UI Injection ────────────────────────────────────────
     function showIndicator(el) {
         const ind = document.createElement('div');
         ind.className = 'vero-pulse-shield';
@@ -262,15 +255,12 @@ Be strict: if unsure, return label "UNKNOWN".`;
         el.appendChild(ind);
         el._vind = ind;
     }
-
     function removeIndicator(el) { el._vind?.remove(); }
 
     function injectBadge(el, result) {
         if (el.querySelector('.vero-warning-badge')) return;
-
         const cls = result.label === 'FAKE' ? 'fake' : 'caution';
         const icon = result.label === 'FAKE' ? '❌' : '⚠️';
-
         const badge = document.createElement('div');
         badge.className = `vero-warning-badge ${cls}`;
         badge.innerHTML = `
@@ -282,7 +272,7 @@ Be strict: if unsure, return label "UNKNOWN".`;
       ${result.pibUrl ? `<div class="vero-source-link">🇮🇳 <a href="${result.pibUrl}" target="_blank">Check PIB Fact Check</a></div>` : ''}
     `;
         el.appendChild(badge);
-        console.log('[VERO] 🏷️ Badge injected into message');
+        console.log('[VERO] 🏷️ Badge injected');
     }
 
     // ─── Helpers ──────────────────────────────────────────────
@@ -290,29 +280,21 @@ Be strict: if unsure, return label "UNKNOWN".`;
         return new Promise((resolve) => {
             try {
                 chrome.runtime.sendMessage({ type, ...payload }, (res) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('[VERO] sendMessage error:', chrome.runtime.lastError.message);
-                        resolve({ success: false, error: chrome.runtime.lastError.message });
-                    } else {
-                        resolve(res || { success: false });
-                    }
+                    if (chrome.runtime.lastError) resolve({ success: false, error: chrome.runtime.lastError.message });
+                    else resolve(res || { success: false });
                 });
-            } catch (err) {
-                console.error('[VERO] sendMessage exception:', err);
-                resolve({ success: false, error: err.message });
-            }
+            } catch (err) { resolve({ success: false, error: err.message }); }
         });
     }
 
     function parseGeminiJSON(raw) {
         if (!raw || typeof raw !== 'string') return { isFake: false, label: 'UNKNOWN', confidence: 0 };
         try {
-            // Remove markdown code fences if present
             let cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
             const match = cleaned.match(/\{[\s\S]*\}/);
             return match ? JSON.parse(match[0]) : { isFake: false, label: 'UNKNOWN', confidence: 0 };
         } catch (e) {
-            console.error('[VERO] JSON parse error:', e, 'Raw:', raw?.substring(0, 200));
+            console.error('[VERO] JSON parse error:', e);
             return { isFake: false, label: 'UNKNOWN', confidence: 0 };
         }
     }
