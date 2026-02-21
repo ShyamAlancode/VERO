@@ -1,143 +1,111 @@
 <h1 align="center">🛡️ VERO</h1>
-<p align="center"><strong>Real-Time Misinformation & Deepfake Detector</strong></p>
+<p align="center"><strong>See What's Real – Real-Time Misinformation & Deepfake Detector</strong></p>
 <p align="center">
-  <img src="https://img.shields.io/badge/Manifest-V3-blue?style=flat-square" />
-  <img src="https://img.shields.io/badge/Platform-Chrome-yellow?style=flat-square" />
-  <img src="https://img.shields.io/badge/Backend-FastAPI-green?style=flat-square" />
-  <img src="https://img.shields.io/badge/Deploy-Vercel-black?style=flat-square" />
-  <img src="https://img.shields.io/badge/AI-HuggingFace-orange?style=flat-square" />
+  <img src="https://img.shields.io/badge/Chrome-Extension-blue?logo=googlechrome&logoColor=white" alt="Chrome">
+  <img src="https://img.shields.io/badge/Gemini%202.0-Flash-orange?logo=google&logoColor=white" alt="Gemini">
+  <img src="https://img.shields.io/badge/TensorFlow.js-Deepfake-red?logo=tensorflow&logoColor=white" alt="TF.js">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
 </p>
 
 ---
 
 ## What is VERO?
 
-**VERO** is a Chrome extension that detects misinformation and deepfakes **in real-time** while you browse WhatsApp Web and Instagram — injecting subtle, non-intrusive warning badges within **~1.5 seconds**.
+VERO is a **free Chrome extension** that detects fake news and deepfakes in real time on **WhatsApp Web** and **Instagram**. It uses a multi-model AI pipeline combining Google Gemini, TensorFlow.js, NewsAPI, and PIB Fact Check.
 
-| Feature | Detail |
-|---|---|
-| 📝 Text analysis | RoBERTa-based fake-news classifier (HuggingFace free tier) |
-| 🎥 Deepfake detection | Video flag pipeline (Phase 2) |
-| 💬 WhatsApp Web | Scans incoming message bubbles |
-| 📸 Instagram | Scans post captions and story/reel videos |
-| ⚡ Speed | Badge injection < 1.5 s (observer + debounce) |
-| 🆓 Cost | 100% free-tier services |
+## ✨ Features
 
----
+| Feature | Description |
+|---------|-------------|
+| 🔍 **AI Fact-Checking** | Gemini 2.0 Flash analyzes messages/captions with contextual news |
+| 👁️ **Deepfake Detection** | TensorFlow.js runs locally in the browser on Instagram Reels |
+| 📰 **Live News Context** | Cross-references with NewsAPI (100 req/day free) |
+| 🇮🇳 **PIB Fact Check** | Links to Indian govt official fact-checking portal |
+| ⚡ **< 1.5s Speed** | Results injected as non-intrusive badges/banners |
+| 🔒 **Privacy First** | Deepfake detection is 100% local — no video data leaves your browser |
 
-## Project Structure
+## 🏗️ Architecture
 
 ```
-VERO/
-├── extension/
-│   ├── icons/               # Extension icons (16, 48, 128 px)
-│   ├── manifest.json        # Chrome Manifest V3
-│   ├── background.js        # Service worker — API routing
-│   ├── content-whatsapp.js  # WhatsApp Web injection
-│   ├── content-instagram.js # Instagram injection
-│   ├── popup.html           # Settings popup UI
-│   ├── popup.js             # Popup logic
-│   └── styles.css           # Warning badge/banner styles
-├── backend/
-│   ├── main.py              # FastAPI app
-│   ├── requirements.txt     # Python deps
-│   └── vercel.json          # Vercel deployment
-├── .gitignore
-└── README.md
+Extension (Chrome Manifest V3)
+├── content-whatsapp.js  → MutationObserver + Gemini + NewsAPI + PIB
+├── content-instagram.js → MutationObserver + TensorFlow.js + Gemini
+├── background.js        → API proxy (Gemini, NewsAPI, PIB)
+├── popup.html/js        → Settings + Live Stats (Google Sans fonts)
+└── styles.css           → Warning badges & reel banners
+
+Backend (FastAPI on Render)
+├── /api/verify     → Full pipeline (Gemini + NewsAPI + PIB)
+├── /api/news       → NewsAPI proxy
+└── /api/pib        → PIB search link
+
+Landing Page (Netlify)
+└── Dark-mode premium landing with Catamaran + Google Sans fonts
 ```
 
----
+## 🚀 Quick Start
 
-## Quick Start
-
-### 1. Load the Extension
-
-1. Open Chrome → `chrome://extensions/`
-2. Enable **Developer mode** (top-right)
+### 1. Install Extension
+```bash
+git clone https://github.com/ShyamAlancode/VERO.git
+```
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
 3. Click **Load unpacked** → select the `extension/` folder
-4. Pin VERO from the extensions toolbar 🎉
+4. Pin VERO 🛡️ to your toolbar
 
-### 2. Set your HuggingFace Token *(optional but recommended)*
+### 2. Configure
+1. Click the VERO icon
+2. Enter your Gemini API key (free at [aistudio.google.com](https://aistudio.google.com))
+3. Toggle WhatsApp / Instagram protection
 
-The extension calls the HuggingFace Inference API directly from the background worker.
-
-1. Get a free token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-2. Open `extension/background.js`
-3. Replace `const HF_TOKEN = "";` with your token
-
-### 3. Run the Backend Locally
-
+### 3. Backend (Optional)
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env          # add HF_TOKEN=your_token_here
 uvicorn main:app --reload
 ```
 
-Test it:
+## 🛠️ Tech Stack
 
-```bash
-curl -X POST http://localhost:8000/analyze/text \
-  -H "Content-Type: application/json" \
-  -d '{"text": "SHOCKING: Scientists confirm moon is made of cheese!"}'
-```
+| Component | Technology | Cost |
+|-----------|-----------|------|
+| LLM Analysis | Google Gemini 2.0 Flash | Free |
+| Deepfake Detection | TensorFlow.js (CDN) | Free |
+| Live News | NewsAPI | Free (100 req/day) |
+| Fact Check | PIB Fact Check | Free |
+| Backend | FastAPI on Render | Free |
+| Landing Page | Netlify | Free |
+| Fonts | Google Sans + Catamaran | Free |
+| Icons | Feather Icons | Free |
 
-### 4. Deploy Backend to Vercel
-
-```bash
-npm i -g vercel
-cd backend
-vercel --prod
-```
-
-Copy the deployed URL and update `BACKEND_URL` in `extension/background.js`.
-
----
-
-## How It Works
+## 📂 Project Structure
 
 ```
-User browses WhatsApp / Instagram
-        │
-        ▼
-Content Script (MutationObserver)
-  detects new message / post
-        │
-        ▼
-Background Service Worker
-  → POST /analyze/text  (HuggingFace API)
-  → POST /analyze/video (Backend / Phase 2)
-        │
-        ▼
-Result: { label, confidence }
-        │
-   FAKE & conf ≥ threshold?
-   ├─ YES → inject ⚠️ warning badge/banner
-   └─ NO  → inject ✅ credible label (auto-hides)
+VERO/
+├── extension/           # Chrome Extension
+│   ├── fonts/           # Catamaran & Google Sans
+│   ├── feather/         # Feather SVG icons
+│   ├── icons/           # Extension icons (16/48/128)
+│   ├── manifest.json    # V3 manifest
+│   ├── background.js    # Service worker
+│   ├── content-whatsapp.js
+│   ├── content-instagram.js
+│   ├── popup.html/js    # Settings UI
+│   └── styles.css       # Injected styles
+├── backend/             # FastAPI server
+│   ├── main.py
+│   ├── requirements.txt
+│   └── vercel.json
+├── landing/             # Netlify landing page
+│   ├── index.html
+│   ├── style.css
+│   ├── fonts/
+│   └── feather/
+├── render.yaml          # Render deployment
+└── README.md
 ```
 
----
+## 📜 License
 
-## Environment Variables
-
-Create `backend/.env`:
-
-```
-HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
----
-
-## Roadmap
-
-- [x] Phase 1 – Project scaffold & text analysis
-- [ ] Phase 2 – Real deepfake detection (EfficientNet-B4 / ONNX)
-- [ ] Phase 3 – Image reverse-search for manipulated photos
-- [ ] Phase 4 – Source credibility scoring
-- [ ] Phase 5 – Firefox support
-
----
-
-## License
-
-MIT © 2025 [ShyamAlancode](https://github.com/ShyamAlancode)
+MIT License © 2026 ShyamAlancode

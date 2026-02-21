@@ -1,0 +1,14 @@
+# Render deployment configuration
+services:
+  - type: web
+    name: vero-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        value: AIzaSyBQ7Mjoahx1BXChaofqafBEgs3Tj_RdlcU
+      - key: NEWSAPI_KEY
+        value: 241b1aba62fd438aa81630a8e35f666e
+    rootDir: backend

@@ -1,63 +1,58 @@
-// Popup logic for VERO
-
+// VERO – Popup Script
 document.addEventListener('DOMContentLoaded', () => {
-    const whatsappToggle = document.getElementById('whatsapp-toggle');
-    const instagramToggle = document.getElementById('instagram-toggle');
-    const apiKeyInput = document.getElementById('api-key');
+    const waToggle = document.getElementById('wa-toggle');
+    const igToggle = document.getElementById('ig-toggle');
+    const apiKey = document.getElementById('api-key');
     const saveBtn = document.getElementById('save-btn');
-    const statusText = document.getElementById('status-text');
-    const countChecked = document.getElementById('count-checked');
-    const countFlagged = document.getElementById('count-flagged');
+    const statusPill = document.getElementById('status-pill');
+    const sChecked = document.getElementById('s-checked');
+    const sFakes = document.getElementById('s-fakes');
+    const sReels = document.getElementById('s-reels');
+    const sDeepfakes = document.getElementById('s-deepfakes');
 
     // Load saved settings
-    chrome.storage.local.get(['enabled', 'whatsapp', 'instagram', 'geminiKey', 'stats'], (data) => {
-        whatsappToggle.checked = data.whatsapp !== false;
-        instagramToggle.checked = data.instagram !== false;
-        apiKeyInput.value = data.geminiKey || '';
-
-        const stats = data.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
-        countChecked.textContent = (stats.messagesChecked || 0) + (stats.reelsScanned || 0);
-        countFlagged.textContent = (stats.fakesDetected || 0) + (stats.deepfakesDetected || 0);
-
-        updateStatusUI();
+    chrome.storage.local.get(['enabled', 'whatsapp', 'instagram', 'geminiKey', 'stats'], (d) => {
+        waToggle.checked = d.whatsapp !== false;
+        igToggle.checked = d.instagram !== false;
+        apiKey.value = d.geminiKey || '';
+        updateStatus();
+        refreshStats(d.stats);
     });
 
+    // Save
     saveBtn.addEventListener('click', () => {
-        const settings = {
-            whatsapp: whatsappToggle.checked,
-            instagram: instagramToggle.checked,
-            geminiKey: apiKeyInput.value.trim(),
-            enabled: true
-        };
-
-        chrome.storage.local.set(settings, () => {
+        chrome.storage.local.set({
+            enabled: true,
+            whatsapp: waToggle.checked,
+            instagram: igToggle.checked,
+            geminiKey: apiKey.value.trim()
+        }, () => {
             saveBtn.textContent = '✓ Saved';
-            saveBtn.style.background = '#34a853';
-            updateStatusUI();
-
-            setTimeout(() => {
-                saveBtn.textContent = 'Save Configuration';
-                saveBtn.style.background = '#1a73e8';
-            }, 1500);
+            saveBtn.style.background = '#10b981';
+            updateStatus();
+            setTimeout(() => { saveBtn.textContent = 'Save Configuration'; saveBtn.style.background = ''; }, 1500);
         });
     });
 
-    function updateStatusUI() {
-        if (whatsappToggle.checked || instagramToggle.checked) {
-            statusText.textContent = 'Active';
-            statusText.style.background = 'rgba(255,255,255,0.2)';
-        } else {
-            statusText.textContent = 'Disabled';
-            statusText.style.background = 'rgba(0,0,0,0.1)';
-        }
+    function updateStatus() {
+        const on = waToggle.checked || igToggle.checked;
+        statusPill.textContent = on ? '● Active' : '○ Paused';
+        statusPill.className = 'status-pill' + (on ? '' : ' off');
     }
 
-    // Poll for stats every 2 seconds
+    function refreshStats(stats) {
+        const s = stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
+        sChecked.textContent = s.messagesChecked || 0;
+        sFakes.textContent = s.fakesDetected || 0;
+        sReels.textContent = s.reelsScanned || 0;
+        sDeepfakes.textContent = s.deepfakesDetected || 0;
+    }
+
+    // Poll stats every 2s
     setInterval(() => {
-        chrome.storage.local.get(['stats'], (data) => {
-            const stats = data.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
-            countChecked.textContent = (stats.messagesChecked || 0) + (stats.reelsScanned || 0);
-            countFlagged.textContent = (stats.fakesDetected || 0) + (stats.deepfakesDetected || 0);
-        });
+        chrome.storage.local.get(['stats'], (d) => refreshStats(d.stats));
     }, 2000);
+
+    waToggle.addEventListener('change', updateStatus);
+    igToggle.addEventListener('change', updateStatus);
 });

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO – See What's Real | Misinformation & Deepfake Detector</title>
+    <meta name="description"
+        content="VERO is a free Chrome extension that detects misinformation and deepfakes in real-time on WhatsApp Web and Instagram. Powered by Google Gemini AI.">
+    <link rel="icon" href="feather/shield.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- ─── Navbar ──────────────────────────── -->
+    <nav class="navbar">
+        <div class="container nav-inner">
+            <a href="#" class="nav-brand">
+                <img src="feather/shield.svg" alt="VERO" class="nav-logo">
+                <span>VERO</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#tech">Tech Stack</a>
+                <a href="https://github.com/ShyamAlancode/VERO" target="_blank" class="nav-gh">
+                    <img src="feather/github.svg" alt="GitHub" class="icon-sm"> GitHub
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ─── Hero ────────────────────────────── -->
+    <section class="hero">
+        <div class="hero-glow"></div>
+        <div class="container hero-inner">
+            <div class="hero-badge">🛡️ Free & Open Source</div>
+            <h1 class="hero-title">
+                Stop Misinformation.<br>
+                <span class="gradient-text">See What's Real.</span>
+            </h1>
+            <p class="hero-desc">
+                VERO is a Chrome extension that detects fake news and deepfakes in real time on <strong>WhatsApp
+                    Web</strong> and <strong>Instagram</strong>. Powered by Google Gemini AI, TensorFlow.js, and
+                NewsAPI.
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/ShyamAlancode/VERO" class="btn btn-primary">
+                    <img src="feather/chrome.svg" alt="" class="icon-sm"> Install Extension
+                </a>
+                <a href="#how-it-works" class="btn btn-outline">
+                    <img src="feather/eye.svg" alt="" class="icon-sm"> See How It Works
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-val">
+                        < 1.5s</div>
+                            <div class="hero-stat-lbl">Detection Speed</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">100%</div>
+                        <div class="hero-stat-lbl">Free Tier</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-val">2</div>
+                        <div class="hero-stat-lbl">Platforms</div>
+                    </div>
+                </div>
+            </div>
+    </section>
+
+    <!-- ─── Features ────────────────────────── -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Features</div>
+                <h2>Everything you need to fight misinformation</h2>
+                <p>Real-time protection across your favourite social platforms</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/search.svg" alt=""></div>
+                    <h3>AI Fact-Checking</h3>
+                    <p>Gemini 2.0 Flash analyzes messages and captions for misinformation with contextual news
+                        enrichment.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/eye.svg" alt=""></div>
+                    <h3>Deepfake Detection</h3>
+                    <p>TensorFlow.js runs locally in your browser to detect AI-generated videos in Instagram Reels.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/globe.svg" alt=""></div>
+                    <h3>Live News Context</h3>
+                    <p>Cross-references claims with NewsAPI and PIB Fact Check for real-time verification against
+                        breaking news.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/lock.svg" alt=""></div>
+                    <h3>Privacy First</h3>
+                    <p>All text analysis happens via secure API calls. Deepfake detection runs entirely in your browser
+                        — no data leaves.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/activity.svg" alt=""></div>
+                    <h3>Visual Warnings</h3>
+                    <p>Subtle, non-intrusive badges on chats. Bold overlay banners on Reels. All injected within 1.5
+                        seconds.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><img src="feather/layers.svg" alt=""></div>
+                    <h3>Multi-Model Pipeline</h3>
+                    <p>Combines Gemini AI + TensorFlow.js + NewsAPI + PIB for maximum accuracy with zero cost.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── How It Works ────────────────────── -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">How It Works</div>
+                <h2>Three-layer verification pipeline</h2>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">01</div>
+                    <div class="step-content">
+                        <h3>Detect</h3>
+                        <p>Content scripts monitor WhatsApp messages and Instagram posts in real time using
+                            MutationObserver.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">02</div>
+                    <div class="step-content">
+                        <h3>Enrich</h3>
+                        <p>Claims are cross-referenced with NewsAPI headlines and PIB Fact Check for contextual
+                            evidence.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">03</div>
+                    <div class="step-content">
+                        <h3>Verify</h3>
+                        <p>Gemini AI analyzes the enriched content. TensorFlow.js scans video frames locally for
+                            deepfake artifacts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Tech Stack ─────────────────────── -->
+    <section class="tech" id="tech">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">Tech Stack</div>
+                <h2>Built with the best — all free tier</h2>
+            </div>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-name">Google Gemini 2.0 Flash</div>
+                    <div class="tech-desc">LLM fact-checking</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-name">TensorFlow.js</div>
+                    <div class="tech-desc">Browser-side deepfake detection</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-name">NewsAPI</div>
+                    <div class="tech-desc">Live news context (100 req/day)</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-name">PIB Fact Check</div>
+                    <div class="tech-desc">Indian govt fact-checks (free)</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-name">Chrome Manifest V3</div>
+                    <div class="tech-desc">Modern extension architecture</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-name">FastAPI + Render</div>
+                    <div class="tech-desc">Free-tier backend hosting</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── CTA ─────────────────────────────── -->
+    <section class="cta">
+        <div class="container cta-inner">
+            <h2>Ready to see what's real?</h2>
+            <p>Install VERO in 30 seconds. No signup. No payment. No data collection.</p>
+            <a href="https://github.com/ShyamAlancode/VERO" class="btn btn-primary btn-lg">
+                <img src="feather/chrome.svg" alt="" class="icon-sm"> Get VERO — Free
+            </a>
+        </div>
+    </section>
+
+    <!-- ─── Footer ──────────────────────────── -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <img src="feather/shield.svg" alt="" class="icon-sm"> <strong>VERO</strong> · See What's Real
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/ShyamAlancode/VERO" target="_blank">
+                    <img src="feather/github.svg" alt="" class="icon-sm"> GitHub
+                </a>
+            </div>
+            <div class="footer-copy">&copy; 2026 ShyamAlancode. Built for Technovation.</div>
+        </div>
+    </footer>
+</body>
+
+</html>

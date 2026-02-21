@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "VERO - See What's Real",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Real-time misinformation and deepfake detection for WhatsApp Web and Instagram",
     "permissions": [
         "storage",
@@ -11,7 +11,8 @@
         "https://web.whatsapp.com/*",
         "https://www.instagram.com/*",
         "https://generativelanguage.googleapis.com/*",
-        "https://api-inference.huggingface.co/*"
+        "https://newsapi.org/*",
+        "https://factcheck.pib.gov.in/*"
     ],
     "content_scripts": [
         {
@@ -55,5 +56,17 @@
         "16": "icons/icon16.png",
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "fonts/*",
+                "feather/*"
+            ],
+            "matches": [
+                "https://web.whatsapp.com/*",
+                "https://www.instagram.com/*"
+            ]
+        }
+    ]
 }
