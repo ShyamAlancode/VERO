@@ -236,15 +236,33 @@ Respond ONLY with JSON (no markdown):
     function removeReelIndicator(c) { c._vind?.remove(); }
 
     // ─── Helpers ──────────────────────────────────────────────
+    let contextDead = false;
+
     function bgMessage(type, payload) {
+        if (contextDead) return Promise.resolve({ success: false, error: 'Context dead' });
         return new Promise((resolve) => {
             try {
+                if (!chrome.runtime?.id) { killScript(); resolve({ success: false, error: 'Context dead' }); return; }
                 chrome.runtime.sendMessage({ type, ...payload }, (res) => {
-                    if (chrome.runtime.lastError) resolve({ success: false, error: chrome.runtime.lastError.message });
-                    else resolve(res || { success: false });
+                    if (chrome.runtime.lastError) {
+                        const err = chrome.runtime.lastError.message || '';
+                        if (err.includes('invalidated') || err.includes('Extension context')) { killScript(); }
+                        resolve({ success: false, error: err });
+                    } else { resolve(res || { success: false }); }
                 });
-            } catch (err) { resolve({ success: false, error: err.message }); }
+            } catch (err) {
+                if (err.message?.includes('invalidated') || err.message?.includes('Extension context')) { killScript(); }
+                resolve({ success: false, error: err.message });
+            }
         });
+    }
+
+    function killScript() {
+        if (contextDead) return;
+        contextDead = true;
+        queue.length = 0;
+        processing = false;
+        console.log('%c[VERO] 🔴 Extension was reloaded. Refresh this page (Ctrl+Shift+R) to reconnect.', 'color: #e53935; font-weight: bold; font-size: 14px;');
     }
 
     function parseGeminiJSON(raw) {
