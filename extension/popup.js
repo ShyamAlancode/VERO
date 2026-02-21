@@ -1,103 +1,71 @@
-/**
- * VERO – Popup Script
- * Manages settings, displays live stats, and handles user interactions.
- */
+// Load settings
+document.addEventListener('DOMContentLoaded', () => {
+    chrome.storage.local.get([
+        'enabled', 'whatsapp', 'instagram',
+        'geminiKey', 'privacyMode', 'useLocalDeepfake',
+        'stats'
+    ], (result) => {
+        document.getElementById('enabled').checked = result.enabled !== false;
+        document.getElementById('whatsapp').checked = result.whatsapp !== false;
+        document.getElementById('instagram').checked = result.instagram !== false;
+        document.getElementById('geminiKey').value = result.geminiKey || '';
+        document.getElementById('privacyMode').checked = result.privacyMode !== false;
+        document.getElementById('useLocalDeepfake').checked = result.useLocalDeepfake !== false;
 
-const DEFAULT_SETTINGS = {
-    enabled: true,
-    confidenceThreshold: 0.75,
-    totalChecked: 0,
-    totalFlagged: 0,
-};
+        // Update status badge
+        updateStatusBadge(result.enabled !== false);
 
-// ── Elements ──────────────────────────────────────────────────────────────────
-const toggle = document.getElementById("main-toggle");
-const toggleLabel = document.getElementById("toggle-label");
-const statusPill = document.getElementById("status-pill");
-const statusText = document.getElementById("status-text");
-const totalChecked = document.getElementById("total-checked");
-const totalFlagged = document.getElementById("total-flagged");
-const thresholdSlider = document.getElementById("threshold-slider");
-const thresholdVal = document.getElementById("threshold-val");
-const resetBtn = document.getElementById("reset-btn");
-
-// ── Load settings ─────────────────────────────────────────────────────────────
-chrome.storage.local.get("settings", (data) => {
-    const settings = data.settings || DEFAULT_SETTINGS;
-    applySettings(settings);
-});
-
-function applySettings(settings) {
-    toggle.checked = settings.enabled;
-    updateToggleUI(settings.enabled);
-
-    const pct = Math.round((settings.confidenceThreshold ?? 0.75) * 100);
-    thresholdSlider.value = pct;
-    thresholdVal.textContent = `${pct}%`;
-    thresholdSlider.style.setProperty("--v", `${pct}%`);
-
-    totalChecked.textContent = animateCount(0, settings.totalChecked || 0, totalChecked);
-    totalFlagged.textContent = animateCount(0, settings.totalFlagged || 0, totalFlagged);
-}
-
-// ── Toggle handler ────────────────────────────────────────────────────────────
-toggle.addEventListener("change", () => {
-    const enabled = toggle.checked;
-    updateToggleUI(enabled);
-    savePartial({ enabled });
-});
-
-function updateToggleUI(enabled) {
-    toggleLabel.textContent = enabled ? "ON" : "OFF";
-    statusPill.className = `status-pill ${enabled ? "" : "off"}`;
-    statusText.textContent = enabled ? "Actively monitoring" : "Paused";
-}
-
-// ── Threshold slider ──────────────────────────────────────────────────────────
-thresholdSlider.addEventListener("input", () => {
-    const pct = parseInt(thresholdSlider.value);
-    thresholdVal.textContent = `${pct}%`;
-    thresholdSlider.style.setProperty("--v", `${pct}%`);
-    savePartial({ confidenceThreshold: pct / 100 });
-});
-
-// ── Reset stats ───────────────────────────────────────────────────────────────
-resetBtn.addEventListener("click", () => {
-    resetBtn.textContent = "Cleared!";
-    setTimeout(() => (resetBtn.textContent = "Reset Stats"), 1500);
-    savePartial({ totalChecked: 0, totalFlagged: 0 });
-    totalChecked.textContent = "0";
-    totalFlagged.textContent = "0";
-});
-
-// ── Poll stats every 2s ───────────────────────────────────────────────────────
-function refreshStats() {
-    chrome.storage.local.get("settings", (data) => {
-        const s = data.settings || DEFAULT_SETTINGS;
-        totalChecked.textContent = s.totalChecked || 0;
-        totalFlagged.textContent = s.totalFlagged || 0;
+        // Update stats
+        const stats = result.stats || { messagesChecked: 0, fakesDetected: 0, reelsScanned: 0, deepfakesDetected: 0 };
+        document.getElementById('messagesChecked').textContent = stats.messagesChecked;
+        document.getElementById('fakesDetected').textContent = stats.fakesDetected;
+        document.getElementById('reelsScanned').textContent = stats.reelsScanned;
+        document.getElementById('deepfakesDetected').textContent = stats.deepfakesDetected;
     });
-}
-setInterval(refreshStats, 2000);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function savePartial(partial) {
-    chrome.storage.local.get("settings", (data) => {
-        const settings = { ...(data.settings || DEFAULT_SETTINGS), ...partial };
-        chrome.storage.local.set({ settings });
+    // Set up AI Studio link
+    document.getElementById('makersuiteLink').href = 'https://aistudio.google.com';
+});
+
+// Update status badge
+function updateStatusBadge(enabled) {
+    const badge = document.getElementById('statusBadge');
+    if (enabled) {
+        badge.textContent = '● Active';
+        badge.className = 'status-badge status-active';
+    } else {
+        badge.textContent = '○ Inactive';
+        badge.className = 'status-badge status-inactive';
+    }
+}
+
+// Save settings
+document.getElementById('saveSettings').addEventListener('click', () => {
+    const settings = {
+        enabled: document.getElementById('enabled').checked,
+        whatsapp: document.getElementById('whatsapp').checked,
+        instagram: document.getElementById('instagram').checked,
+        geminiKey: document.getElementById('geminiKey').value.trim(),
+        privacyMode: document.getElementById('privacyMode').checked,
+        useLocalDeepfake: document.getElementById('useLocalDeepfake').checked
+    };
+
+    chrome.storage.local.set(settings, () => {
+        updateStatusBadge(settings.enabled);
+
+        // Show saved confirmation
+        const btn = document.getElementById('saveSettings');
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Saved!';
+        btn.style.background = '#34a853';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '#1a73e8';
+        }, 1500);
     });
-}
+});
 
-function animateCount(from, to, el) {
-    const duration = 600;
-    const step = (to - from) / (duration / 16);
-    let current = from;
-    const timer = setInterval(() => {
-        current += step;
-        if ((step > 0 && current >= to) || (step < 0 && current <= to)) {
-            clearInterval(timer);
-            current = to;
-        }
-        el.textContent = Math.round(current);
-    }, 16);
-}
+// Listen for enabled toggle to update badge
+document.getElementById('enabled').addEventListener('change', (e) => {
+    updateStatusBadge(e.target.checked);
+});

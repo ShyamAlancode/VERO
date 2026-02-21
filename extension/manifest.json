@@ -1,39 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "VERO – Real-Time Truth Checker",
+  "name": "VERO - See What's Real",
   "version": "1.0.0",
-  "description": "Detects misinformation and deepfakes in real-time on WhatsApp Web and Instagram.",
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    },
-    "default_title": "VERO – Truth Checker"
-  },
-  "background": {
-    "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://web.whatsapp.com/*"],
-      "js": ["content-whatsapp.js"],
-      "css": ["styles.css"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["https://www.instagram.com/*"],
-      "js": ["content-instagram.js"],
-      "css": ["styles.css"],
-      "run_at": "document_idle"
-    }
-  ],
+  "description": "Real-time misinformation and deepfake detection for WhatsApp Web and Instagram",
   "permissions": [
     "storage",
     "activeTab"
@@ -41,9 +10,49 @@
   "host_permissions": [
     "https://web.whatsapp.com/*",
     "https://www.instagram.com/*",
-    "https://api-inference.huggingface.co/*"
+    "https://generativelanguage.googleapis.com/*"
   ],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "content-whatsapp.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "content-instagram.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   }
 }

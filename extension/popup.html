@@ -1,303 +1,292 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VERO – Truth Checker</title>
+  <meta charset="UTF-8">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #0f0f14;
-      color: #e2e2f0;
       width: 320px;
-      min-height: 420px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      background: #ffffff;
     }
 
-    /* ── Header ──────────────────────────────────── */
     .header {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      padding: 20px 20px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #6c63ff, #3ecfcf);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 4px 14px rgba(108,99,255,0.4);
-    }
-    .logo-text h1 {
-      font-size: 16px;
-      font-weight: 700;
-      background: linear-gradient(90deg, #6c63ff, #3ecfcf);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 2px;
-    }
-    .logo-text p {
-      font-size: 10px;
-      color: #888;
-      letter-spacing: 0.5px;
-    }
-
-    /* ── Toggle ──────────────────────────────────── */
-    .toggle-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-bottom: 16px;
     }
-    .toggle-label { font-size: 12px; color: #aaa; }
-    .toggle {
-      position: relative;
-      width: 44px; height: 24px;
-    }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; inset: 0;
-      background: #333;
-      border-radius: 24px;
-      cursor: pointer;
-      transition: background 0.25s;
-    }
-    .slider::before {
-      content: '';
-      position: absolute;
-      width: 18px; height: 18px;
-      left: 3px; top: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.25s;
-    }
-    input:checked + .slider { background: linear-gradient(135deg, #6c63ff, #3ecfcf); }
-    input:checked + .slider::before { transform: translateX(20px); }
 
-    /* ── Stats ───────────────────────────────────── */
-    .stats {
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #1a73e8, #8ab4f8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      color: #5f6368;
+      font-size: 12px;
+      margin-top: -4px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e8eaed;
+    }
+
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #202124;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #3c4043;
+    }
+
+    .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      padding: 18px 20px;
+      margin-top: 8px;
     }
+
     .stat-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 14px;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
       text-align: center;
-      transition: border-color 0.2s;
     }
-    .stat-card:hover { border-color: rgba(108,99,255,0.4); }
-    .stat-num {
-      font-size: 28px;
-      font-weight: 700;
-      background: linear-gradient(90deg, #6c63ff, #3ecfcf);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a73e8;
     }
+
     .stat-label {
       font-size: 11px;
-      color: #888;
+      color: #5f6368;
       margin-top: 4px;
-      letter-spacing: 0.3px;
-    }
-    .stat-card.danger .stat-num {
-      background: linear-gradient(90deg, #ff6b6b, #ff4757);
-      -webkit-background-clip: text;
     }
 
-    /* ── Threshold ───────────────────────────────── */
-    .section {
-      padding: 0 20px 16px;
-    }
-    .section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #777;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-    }
-    .slider-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    input[type=range] {
-      flex: 1;
-      appearance: none;
-      height: 4px;
+    .input-field {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #dadce0;
       border-radius: 4px;
-      background: linear-gradient(90deg, #6c63ff var(--v,75%), #333 var(--v,75%));
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #6c63ff, #3ecfcf);
-      box-shadow: 0 2px 8px rgba(108,99,255,0.5);
-    }
-    .slider-val {
+      margin: 8px 0;
       font-size: 13px;
-      font-weight: 600;
-      color: #6c63ff;
-      min-width: 34px;
-      text-align: right;
     }
 
-    /* ── Platforms ───────────────────────────────── */
-    .platforms {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .platform-pill {
-      display: flex; align-items: center; gap: 5px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 12px;
-      color: #ccc;
-    }
-    .platform-pill.active {
-      border-color: #3ecfcf;
-      color: #3ecfcf;
-      background: rgba(62,207,207,0.08);
-    }
-    .platform-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    /* ── Footer ──────────────────────────────────── */
-    .footer {
-      padding: 14px 20px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .version { font-size: 10px; color: #555; }
-    .reset-btn {
-      font-size: 11px;
-      color: #888;
-      background: none;
+    .button {
+      background: #1a73e8;
+      color: white;
       border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
       cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: color 0.2s, background 0.2s;
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
     }
-    .reset-btn:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
 
-    /* ── Status pill ─────────────────────────────── */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 6px;
+    .button:hover {
+      background: #1557b0;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
       font-size: 11px;
-      background: rgba(62,207,207,0.12);
-      border: 1px solid rgba(62,207,207,0.3);
-      color: #3ecfcf;
+      font-weight: 500;
+    }
+
+    .status-active {
+      background: #e6f4ea;
+      color: #1e8e3e;
+    }
+
+    .status-inactive {
+      background: #fce8e6;
+      color: #d93025;
+    }
+
+    .footer {
+      font-size: 11px;
+      color: #9aa0a6;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .privacy-note {
+      background: #e8f0fe;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #1a73e8;
+      margin: 8px 0;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .2s;
       border-radius: 20px;
-      padding: 4px 12px;
-      margin: 0 20px 16px;
     }
-    .status-dot {
-      width: 6px; height: 6px;
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
       border-radius: 50%;
-      background: #3ecfcf;
-      animation: pulse 1.5s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+
+    input:checked+.slider {
+      background-color: #1a73e8;
     }
-    .status-pill.off {
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(255,255,255,0.1);
-      color: #666;
+
+    input:checked+.slider:before {
+      transform: translateX(20px);
     }
-    .status-pill.off .status-dot { background: #666; animation: none; }
   </style>
 </head>
+
 <body>
   <div class="header">
-    <div class="logo">
-      <div class="logo-icon">🛡️</div>
-      <div class="logo-text">
-        <h1>VERO</h1>
-        <p>Real-Time Truth Checker</p>
-      </div>
+    <span class="logo">VERO</span>
+    <span class="status-badge" id="statusBadge">● Active</span>
+  </div>
+  <div class="tagline">See what's real · AI-powered misinformation detection</div>
+
+  <div class="section">
+    <div class="section-title">Protection</div>
+
+    <div class="toggle-item">
+      <span class="toggle-label">🛡️ Enable VERO</span>
+      <label class="switch">
+        <input type="checkbox" id="enabled" checked>
+        <span class="slider"></span>
+      </label>
     </div>
-    <div class="toggle-wrap">
-      <span class="toggle-label" id="toggle-label">ON</span>
-      <label class="toggle">
-        <input type="checkbox" id="main-toggle" checked />
+
+    <div class="toggle-item">
+      <span class="toggle-label">💬 WhatsApp Web</span>
+      <label class="switch">
+        <input type="checkbox" id="whatsapp" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-item">
+      <span class="toggle-label">📸 Instagram</span>
+      <label class="switch">
+        <input type="checkbox" id="instagram" checked>
         <span class="slider"></span>
       </label>
     </div>
   </div>
 
-  <div style="height:14px"></div>
-
-  <div class="status-pill" id="status-pill">
-    <div class="status-dot"></div>
-    <span id="status-text">Actively monitoring</span>
-  </div>
-
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-num" id="total-checked">0</div>
-      <div class="stat-label">Posts Checked</div>
-    </div>
-    <div class="stat-card danger">
-      <div class="stat-num" id="total-flagged">0</div>
-      <div class="stat-label">Flagged</div>
+  <div class="section">
+    <div class="section-title">Statistics</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="messagesChecked">0</div>
+        <div class="stat-label">Messages Checked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="fakesDetected">0</div>
+        <div class="stat-label">Fakes Detected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="reelsScanned">0</div>
+        <div class="stat-label">Reels Scanned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="deepfakesDetected">0</div>
+        <div class="stat-label">Deepfakes</div>
+      </div>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Sensitivity Threshold</div>
-    <div class="slider-row">
-      <input type="range" id="threshold-slider" min="50" max="99" value="75" />
-      <span class="slider-val" id="threshold-val">75%</span>
+    <div class="section-title">AI Settings (Free Tier)</div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="font-size: 12px; color: #3c4043;">Google Gemini API Key</label>
+      <input type="password" class="input-field" id="geminiKey" placeholder="Enter your free API key">
+      <div style="font-size: 11px; color: #5f6368; margin-top: 2px;">
+        Get free key at <a href="#" id="makersuiteLink" target="_blank">aistudio.google.com</a>
+      </div>
+    </div>
+
+    <div class="toggle-item">
+      <span class="toggle-label">🔒 Privacy Mode (Hash text)</span>
+      <label class="switch">
+        <input type="checkbox" id="privacyMode" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-item">
+      <span class="toggle-label">🤖 Local Deepfake Detection</span>
+      <label class="switch">
+        <input type="checkbox" id="useLocalDeepfake" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="privacy-note">
+      🔒 Zero data storage · All processing is ephemeral
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Active Platforms</div>
-    <div class="platforms">
-      <div class="platform-pill active">
-        <div class="platform-dot"></div>
-        WhatsApp Web
-      </div>
-      <div class="platform-pill active">
-        <div class="platform-dot"></div>
-        Instagram
-      </div>
-    </div>
-  </div>
+  <button class="button" id="saveSettings">Save Settings</button>
 
   <div class="footer">
-    <span class="version">VERO v1.0.0</span>
-    <button class="reset-btn" id="reset-btn">Reset Stats</button>
+    VERO v1.0 · Made for Technovation 2026
   </div>
 
   <script src="popup.js"></script>
 </body>
+
 </html>

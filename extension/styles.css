@@ -1,151 +1,124 @@
-/* ─────────────────────────────────────────────────────────────────────────────
-   VERO – Injected Styles
-   Applied on WhatsApp Web and Instagram.com
-───────────────────────────────────────────────────────────────────────────── */
-
-/* ── WhatsApp Badge ──────────────────────────────────────────────────────── */
-.vero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.2px;
-  max-width: 100%;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  animation: vero-fadein 0.3s ease;
-  position: relative;
-  pointer-events: auto;
-  z-index: 9998;
-}
-
-.vero-badge--danger {
-  background: rgba(255, 69, 58, 0.12);
-  border: 1px solid rgba(255, 69, 58, 0.45);
-  color: #ff453a;
-}
-
-.vero-badge--safe {
-  background: rgba(50, 215, 75, 0.1);
-  border: 1px solid rgba(50, 215, 75, 0.35);
-  color: #34c759;
-}
-
-.vero-badge--unknown {
-  background: rgba(255, 204, 0, 0.1);
-  border: 1px solid rgba(255, 204, 0, 0.35);
-  color: #ffd60a;
-}
-
-.vero-badge__icon { font-size: 13px; }
-.vero-badge__text { font-weight: 600; }
-.vero-badge__conf {
-  opacity: 0.75;
-  font-size: 10px;
-  font-weight: 400;
-}
-
-.vero-badge__dismiss {
-  background: none;
-  border: none;
-  color: inherit;
-  opacity: 0.5;
-  cursor: pointer;
-  font-size: 15px;
-  line-height: 1;
-  padding: 0 0 0 4px;
-  margin-left: auto;
-  transition: opacity 0.15s;
-}
-.vero-badge__dismiss:hover { opacity: 1; }
-
-/* ── Instagram Banner ────────────────────────────────────────────────────── */
-.vero-banner {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  padding: 10px 14px;
-  font-family: 'Inter', system-ui, sans-serif;
+.vero-warning-badge {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  animation: vero-slide-in 0.2s ease;
   font-size: 12px;
-  font-weight: 500;
+  padding: 4px 8px;
+  margin: 4px 0 4px 0;
+  border-radius: 4px;
+  display: inline-block;
+  max-width: fit-content;
   z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.vero-warning-badge.fake {
+  background-color: #ffebee;
+  border-left: 3px solid #f44336;
+  color: #b71c1c;
+}
+
+.vero-warning-badge.caution {
+  background-color: #fff8e1;
+  border-left: 3px solid #ffc107;
+  color: #bf360c;
+}
+
+.vero-warning-badge.verified {
+  background-color: #e8f5e9;
+  border-left: 3px solid #4caf50;
+  color: #1b5e20;
+}
+
+.vero-reel-banner {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 10000;
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: vero-slidein 0.35s ease;
-  border-radius: 4px 4px 0 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: vero-fade-in 0.3s ease;
+  pointer-events: none;
+  color: white;
 }
 
-.vero-banner--danger {
-  background: rgba(20, 0, 0, 0.72);
-  border-bottom: 2px solid #ff453a;
-  color: #ff453a;
+.vero-reel-banner.deepfake {
+  background: rgba(244, 67, 54, 0.9);
 }
 
-.vero-banner--safe {
-  background: rgba(0, 20, 5, 0.65);
-  border-bottom: 2px solid #34c759;
-  color: #34c759;
-  animation: vero-slidein 0.35s ease, vero-fadeout 0.5s ease 2.5s forwards;
+.vero-reel-banner.misleading {
+  background: rgba(255, 152, 0, 0.9);
 }
 
-.vero-banner--unknown {
-  background: rgba(20, 16, 0, 0.65);
-  border-bottom: 2px solid #ffd60a;
-  color: #ffd60a;
-}
-
-.vero-banner__content {
+.vero-pulse-shield {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  background: rgba(33, 150, 243, 0.2);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: center;
+  animation: vero-pulse 1.5s infinite;
+  z-index: 9999;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
 }
 
-.vero-banner__label { font-weight: 700; }
-.vero-banner__conf {
-  opacity: 0.8;
+@keyframes vero-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vero-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vero-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+.vero-source-link {
   font-size: 11px;
-  font-weight: 400;
-}
-.vero-banner__tip {
-  font-size: 10px;
-  opacity: 0.6;
-  font-style: italic;
+  margin-top: 2px;
+  opacity: 0.8;
 }
 
-.vero-banner__dismiss {
-  background: none;
-  border: none;
+.vero-source-link a {
   color: inherit;
-  opacity: 0.55;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-  padding: 2px 4px;
-  transition: opacity 0.15s;
-  flex-shrink: 0;
-}
-.vero-banner__dismiss:hover { opacity: 1; }
-
-/* ── Animations ──────────────────────────────────────────────────────────── */
-@keyframes vero-fadein {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes vero-slidein {
-  from { opacity: 0; transform: translateY(-100%); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes vero-fadeout {
-  from { opacity: 1; }
-  to   { opacity: 0; pointer-events: none; }
+  text-decoration: underline;
+  pointer-events: auto;
 }
