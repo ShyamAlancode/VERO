@@ -144,7 +144,7 @@ Respond ONLY with JSON (no markdown):
                     console.warn('[VERO] ⏸️ Caption rate limited — will retry later');
                     return 'rate-limited';
                 }
-                console.error('[VERO] Caption Gemini failed:', err);
+                if (err !== 'Context dead') console.error('[VERO] Caption Gemini failed:', err);
                 article.setAttribute('data-vero-caption', 'error');
                 return 'error';
             }

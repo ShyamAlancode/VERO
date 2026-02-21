@@ -214,7 +214,7 @@ Be strict: if unsure, return label "UNKNOWN".`;
                     el.setAttribute('data-vero', 'queued');
                     return 'rate-limited';
                 }
-                console.error('[VERO] ❌ Gemini failed:', err);
+                if (err !== 'Context dead') console.error('[VERO] ❌ Gemini failed:', err);
                 el.setAttribute('data-vero', 'error');
                 return 'error';
             }
